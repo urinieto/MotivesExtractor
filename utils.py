@@ -25,8 +25,6 @@ import os
 import pylab as plt
 from scipy import spatial
 import subprocess
-
-# TODO: Import locally!
 from scikits import audiolab
 
 CSV_ONTIME = 0

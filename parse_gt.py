@@ -128,6 +128,19 @@ def process(jku_dir, out_dir):
             # Get all the annotators for the current piece
             annotators = glob.glob(os.path.join(piece, type,
                                                 "repeatedPatterns", "*"))
+
+            # Based on the readme.txt of JKU, these are the valid annotators
+            # (thanks Colin! :-)
+            if type == "polyphonic":
+                valid_annotators = ['barlowAndMorgensternRevised',
+                                    'bruhn',
+                                    'schoenberg',
+                                    'sectionalRepetitions',
+                                    'tomCollins']
+                for annotator in annotators:
+                    if os.path.split(annotator)[1] not in valid_annotators:
+                        annotators.remove(annotator)
+
             all_patterns.append(get_gt_patterns(annotators))
 
     # For the patterns of one given file, parse them into a single file
