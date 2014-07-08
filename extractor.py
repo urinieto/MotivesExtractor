@@ -223,7 +223,7 @@ def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
     h = bpm / 60. / 8.  # /8 works better than /4, but it takes longer
                         # to process
 
-    if not ssm_read_pk and False:  # TODO Remove False!
+    if not ssm_read_pk:  # TODO Remove False!
         # Read WAV file
         print "Reading the WAV file..."
         C = utils.compute_audio_chromagram(wav_file, h)

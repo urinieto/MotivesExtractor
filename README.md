@@ -8,6 +8,11 @@ Requirements
 ------------
 
 audiolab
+
 Numpy
+
 Scipy
+
+SoX
+
 mir_eval
