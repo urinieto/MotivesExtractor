@@ -53,7 +53,18 @@ CSV_STAFF = 4
 
 def get_bpm(wav_file):
     """Gets the correct bpm based on the wav_file name. If the wav_file is not
-    contained in the JKU dataset, raises error."""
+    contained in the JKU dataset, raises error.
+    
+    Parameters
+    ----------
+    wav_file : str
+        Path to the wav file to obtain its bpm.
+
+    Returns
+    -------
+    bpm : int
+        BPM of the piece, as described in the JKU dataset.
+    """
     bpm_dict = {"wtc2f20-poly" : 84,
                 "sonata01-3-poly" : 118,
                 "mazurka24-4-poly" : 138,
@@ -69,7 +80,24 @@ def get_bpm(wav_file):
 
 def occurrence_to_csv(start, end, score, h):
     """Given an occurrence, return the csv formatted one into a
-        list (onset,midi)."""
+        list (onset,midi).
+
+    Parameters
+    ----------
+    start : int
+        Start index of the occurrence.
+    end : int
+        End index of the occurrence.
+    score : list
+        The score of the piece (read form CSV format).
+    h : float
+        Hop size for the SSM.
+
+    Returns
+    -------
+    occ : list
+        Occurrence in the csv format list(onset, midi).
+    """
     occ = []
     start = int(start)
     end = int(end)
@@ -86,10 +114,24 @@ def occurrence_to_csv(start, end, score, h):
 
 
 def patterns_to_csv(patterns, score, h):
-    """Formats the patterns into the csv format."""
+    """Formats the patterns into the csv format.
+
+    Parameters
+    ----------
+    pattersn : list
+        List of patterns with its occurrences.
+    score : list
+        The score of the piece (read from CSV).
+    h : float
+        Hop size of the ssm.
+
+    Returns
+    -------
+    csv_patterns : list
+        List of the patterns in the csv format to be analyzed by MIREX.
+    """
     offset = np.abs(int(utils.get_offset(score) / float(h)))
     csv_patterns = []
-    #h = h / 2.
     for p in patterns:
         new_p = []
         for occ in p:
@@ -106,7 +148,20 @@ def patterns_to_csv(patterns, score, h):
 
 def obtain_patterns(segments, max_diff):
     """Given a set of segments, find its occurrences and thus obtain the
-    possible patterns."""
+    possible patterns.
+
+    Parameters
+    ----------
+    segments : list
+        List of the repetitions found in the self-similarity matrix.
+    max_diff : float
+        Maximum difference to decide whether we found a segment or not.
+
+    Returns
+    -------
+    patters : list
+        List of patterns found.
+    """
     patterns = []
     N = len(segments)
 
@@ -141,7 +196,7 @@ def obtain_patterns(segments, max_diff):
     return patterns
 
 
-def compute_ssm(wav_file, h, ssm_read_pk):
+def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False):
     """Computes the self similarity matrix from an audio file.
 
     Parameters
@@ -153,13 +208,21 @@ def compute_ssm(wav_file, h, ssm_read_pk):
     ssm_read_pk : bool
         Whether to read the ssm from a pickle file or not (note: this function
         utomatically saves the ssm in a pickle file).
+    is_ismir : bool
+        Produce the plots that appear on the ISMIR paper.
+
+    Returns
+    -------
+    X : np.array((N, N))
+        Self-similarity matrix
     """
     if not ssm_read_pk:
         # Read WAV file
         logging.info("Reading the WAV file...")
         C = utils.compute_audio_chromagram(wav_file, h)
 
-        #plot_chroma(C)
+        if is_ismir:
+            ismir.plot_chroma(C)
 
         # Compute the self similarity matrix
         logging.info("Computing key-invariant self-similarity matrix...")
@@ -169,8 +232,9 @@ def compute_ssm(wav_file, h, ssm_read_pk):
     else:
         X = utils.read_cPickle(wav_file + "-audio-ssm.pk")
 
-    # plot_score_examples(X)
-    # plot_ssm(X)
+    if is_ismir:
+        ismir.plot_score_examples(X)
+        ismir.plot_ssm(X)
 
     return X
 
@@ -213,7 +277,7 @@ def process(wav_file, csv_file, outfile, bpm=None, tol=0.95, ssm_read_pk=False,
                         # to process
 
     # Obtain the Self Similarity Matrix
-    X = compute_ssm(wav_file, h, ssm_read_pk)
+    X = compute_ssm(wav_file, h, ssm_read_pk, is_ismir)
 
     # Read CSV file
     logging.info("Reading the CSV file for MIDI pitches...")
@@ -239,7 +303,6 @@ def process(wav_file, csv_file, outfile, bpm=None, tol=0.95, ssm_read_pk=False,
         # Obtain the patterns from the segments and split them if needed
         logging.info("Obtaining the patterns from the segments...")
         patterns = obtain_patterns(segments, max_diff)
-        #patterns = utils.split_patterns(patterns, max_diff, min_dur)
 
         # Formatting csv patterns
         csv_patterns = patterns_to_csv(patterns, score, h)
