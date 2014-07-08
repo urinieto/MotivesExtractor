@@ -38,15 +38,33 @@ __email__ = "oriol@nyu.edu"
 import argparse
 import logging
 import numpy as np
-import pylab as plt
+import os
 import time
 import utils
+import ismir
+
 
 CSV_ONTIME = 0
 CSV_MIDI = 1
 CSV_HEIGHT = 2
 CSV_DUR = 3
 CSV_STAFF = 4
+
+
+def get_bpm(wav_file):
+    """Gets the correct bpm based on the wav_file name. If the wav_file is not
+    contained in the JKU dataset, raises error."""
+    bpm_dict = {"wtc2f20-poly" : 84,
+                "sonata01-3-poly" : 118,
+                "mazurka24-4-poly" : 138,
+                "silverswan-poly" : 54,
+                "sonata04-2-poly" : 120
+                }
+    wav_file = os.path.basename(wav_file).replace(".wav", "")
+    if wav_file not in bpm_dict.keys():
+        raise Exception("%s not in the JKU dataset, you need to input a BPM" %
+                        wav_file)
+    return bpm_dict[wav_file]
 
 
 def occurrence_to_csv(start, end, score, h):
@@ -123,107 +141,19 @@ def obtain_patterns(segments, max_diff):
     return patterns
 
 
-def plot_ssm(X):
-    Y = (X[3:, 3:] + X[2:-1, 2:-1] + X[1:-2, 1:-2] + X[:-3, :-3]) / 3.
-    plt.imshow((1 - Y), interpolation="nearest", cmap=plt.cm.gray)
-    h = 1705
-    m = 245.
-    l = 2.0
-    plt.axvline(28 * h / m, color="k", linewidth=l)
-    plt.axvline(50 * h / m, color="k", linewidth=l)
-    plt.axvline(70 * h / m, color="k", linewidth=l)
-    plt.axvline(91 * h / m, color="k", linewidth=l)
-    plt.axvline(110 * h / m, color="k", linewidth=l)
-    plt.axvline(135 * h / m, color="k", linewidth=l)
-    plt.axvline(157 * h / m, color="k", linewidth=l)
-    plt.axvline(176 * h / m, color="k", linewidth=l)
-    plt.axvline(181 * h / m, color="k", linewidth=l)
-    plt.axvline(202 * h / m, color="k", linewidth=l)
+def compute_ssm(wav_file, h, ssm_read_pk):
+    """Computes the self similarity matrix from an audio file.
 
-    plt.axhline(28 * h / m, color="k", linewidth=l)
-    plt.axhline(50 * h / m, color="k", linewidth=l)
-    plt.axhline(70 * h / m, color="k", linewidth=l)
-    plt.axhline(91 * h / m, color="k", linewidth=l)
-    plt.axhline(110 * h / m, color="k", linewidth=l)
-    plt.axhline(135 * h / m, color="k", linewidth=l)
-    plt.axhline(157 * h / m, color="k", linewidth=l)
-    plt.axhline(176 * h / m, color="k", linewidth=l)
-    plt.axhline(181 * h / m, color="k", linewidth=l)
-    plt.axhline(202 * h / m, color="k", linewidth=l)
-    plt.show()
-
-
-def plot_chroma(C):
-    plt.imshow((1 - C.T), interpolation="nearest", aspect="auto",
-               cmap=plt.cm.gray)
-    plt.yticks(np.arange(12), ("A", "A#", "B", "C", "C#", "D", "D#", "E", "F",
-                               "F#", "G", "G#"))
-    h = 1705
-    m = 245.
-    l = 2.0
-    plt.axvline(28 * h / m, color="k", linewidth=l)
-    plt.axvline(50 * h / m, color="k", linewidth=l)
-    plt.axvline(70 * h / m, color="k", linewidth=l)
-    plt.axvline(91 * h / m, color="k", linewidth=l)
-    plt.axvline(110 * h / m, color="k", linewidth=l)
-    plt.axvline(135 * h / m, color="k", linewidth=l)
-    plt.axvline(157 * h / m, color="k", linewidth=l)
-    plt.axvline(176 * h / m, color="k", linewidth=l)
-    plt.axvline(181 * h / m, color="k", linewidth=l)
-    plt.axvline(202 * h / m, color="k", linewidth=l)
-    plt.xticks(np.empty(0), np.empty(0))
-    plt.show()
-
-
-def plot_score_examples(X):
-    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3)
-    plt.subplots_adjust(wspace=.05)
-    props = dict(boxstyle='round', facecolor='white', alpha=0.95)
-
-    # Synthesized matrix
-    X1 = np.zeros((12, 12))
-    np.fill_diagonal(X1, 1)
-    utils.compute_segment_score_omega(X1, 0, 0, 10, 0.35, 3)
-    ax1.imshow(1 - X1, interpolation="nearest", cmap=plt.cm.gray)
-    textstr = "$\sigma$(1)=1\n$\sigma$(2)=0.36\n$\sigma$(3)=0.22"
-    ax1.text(5.7, 0.005, textstr, fontsize=14,
-        verticalalignment='top', bbox=props)
-    ax1.set_xticks(np.empty(0), np.empty(0))
-    ax1.set_yticks(np.empty(0), np.empty(0))
-
-    # Real matrix with an actual path
-    X2 = X[359:359 + 31, 1285:1285 + 31]
-    utils.compute_segment_score_omega(X, 359, 1285, 31, 0.35, 3)
-    ax2.imshow(1 - X2, interpolation="nearest", cmap=plt.cm.gray)
-    textstr = "$\sigma$(1)=-0.48\n$\sigma$(2)=0.44\n$\sigma$(3)=0.55"
-    ax2.text(15.00, 0.55, textstr, fontsize=14,
-        verticalalignment='top', bbox=props)
-    ax2.set_xticks(np.empty(0), np.empty(0))
-    ax2.set_yticks(np.empty(0), np.empty(0))
-
-    utils.compute_segment_score(X, 500, 1100, 31, 0.35)
-    utils.compute_segment_score_omega(X, 500, 1100, 31, 0.35, 3)
-    X3 = X[500:500 + 31, 1100:1100 + 31]
-    ax3.imshow(1 - X3, interpolation="nearest", cmap=plt.cm.gray)
-    textstr = "$\sigma$(1)=-0.46\n$\sigma$(2)=0.21\n$\sigma$(3)=0.32"
-    ax3.text(15.00, 0.55, textstr, fontsize=14,
-        verticalalignment='top', bbox=props)
-    ax3.set_xticks(np.empty(0), np.empty(0))
-    ax3.set_yticks(np.empty(0), np.empty(0))
-
-    plt.show()
-
-
-def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
-            read_pk=False, rho=2):
-    """Main process to find the patterns in a polyphonic score."""
-    min_notes = 8
-    max_diff_notes = 1
-
-    # Hop size
-    h = bpm / 60. / 8.  # /8 works better than /4, but it takes longer
-                        # to process
-
+    Parameters
+    ----------
+    wav_file: str
+        Path to the wav file to be read.
+    h : float
+        Hop size.
+    ssm_read_pk : bool
+        Whether to read the ssm from a pickle file or not (note: this function
+        utomatically saves the ssm in a pickle file).
+    """
     if not ssm_read_pk:
         # Read WAV file
         logging.info("Reading the WAV file...")
@@ -235,12 +165,55 @@ def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
         logging.info("Computing key-invariant self-similarity matrix...")
         X = utils.compute_key_inv_ssm(C, h)
 
-        utils.write_cPickle(csv_file + "-audio-ssm.pk", X)
+        utils.write_cPickle(wav_file + "-audio-ssm.pk", X)
     else:
-        X = utils.read_cPickle(csv_file + "-audio-ssm.pk")
+        X = utils.read_cPickle(wav_file + "-audio-ssm.pk")
 
     # plot_score_examples(X)
     # plot_ssm(X)
+
+    return X
+
+
+def process(wav_file, csv_file, outfile, bpm=None, tol=0.95, ssm_read_pk=False,
+            read_pk=False, rho=2, is_ismir=False):
+    """Main process to find the patterns in a polyphonic audio file.
+
+    Parameters
+    ----------
+    wav_file : str
+        Path to the wav file to be analyzed.
+    csv_file : str
+        Path to the csv containing the score of the input audio file
+        (needed to produce a result that can be read for JKU dataset).
+    outfile : str
+        Path to file to save the results.
+    bpm : int
+        Beats per minute of the piece. If None, bpms are read from the JKU.
+    tol : float
+        Tolerance to find the segments in the SSM.
+    ssm_read_pk : bool
+        Whether to read the SSM from a pickle file.
+    read_pk : bool
+        Whether to read the segments from a pickle file.
+    rho : int
+        Positive integer to compute the score of the segments.
+    is_ismir : bool
+        Produce the plots that appear on the ISMIR paper.
+    """
+
+    # Get the correct bpm if needed
+    if bpm is None:
+        bpm = get_bpm(wav_file)
+
+    # Algorithm parameters
+    min_notes = 8
+    max_diff_notes = 1
+    h = bpm / 60. / 8.  # Hop size /8 works better than /4, but it takes longer
+                        # to process
+
+    # Obtain the Self Similarity Matrix
+    X = compute_ssm(wav_file, h, ssm_read_pk)
 
     # Read CSV file
     logging.info("Reading the CSV file for MIDI pitches...")
@@ -252,36 +225,16 @@ def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
         logging.info("Finding segments in the self-similarity matrix...")
         max_diff = int(max_diff_notes / float(h))
         min_dur = int(np.ceil(min_notes / float(h)))
-        print min_dur, min_notes, h
+        #print min_dur, min_notes, h
         if not read_pk:
             segments = []
             while segments == []:
-                print "\ttrying tolerance", tol
+                logging.info("\ttrying tolerance" % tol)
                 segments = utils.find_segments(X, min_dur, th=tol, rho=rho)
                 tol -= 0.05
             utils.write_cPickle(csv_file + "-audio.pk", segments)
         else:
             segments = utils.read_cPickle(csv_file + "-audio.pk")
-
-        for s in segments:
-            line_strength = 4
-            np.fill_diagonal(X[s[0]:s[1], s[2]:s[3]], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2] + 1:s[3] + 1], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2] + 2:s[3] + 2], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2] + 3:s[3] + 3], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2] + 4:s[3] + 4], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2] - 1:s[3] - 1], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2] - 2:s[3] - 2], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2] - 3:s[3] - 3], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2] - 4:s[3] - 4], line_strength)
-        for i in xrange(X.shape[0] - 15):
-            for j in xrange(i + 15):
-                X[i, j] = 0
-
-        plt.imshow(X, interpolation="nearest", cmap=plt.cm.gray)
-        plt.xticks(np.empty(0), np.empty(0))
-        plt.yticks(np.empty(0), np.empty(0))
-        plt.show()
 
         # Obtain the patterns from the segments and split them if needed
         logging.info("Obtaining the patterns from the segments...")
@@ -291,6 +244,9 @@ def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
         # Formatting csv patterns
         csv_patterns = patterns_to_csv(patterns, score, h)
         tol -= 0.05
+
+    if is_ismir:
+        ismir.plot_segments(X, segments)
 
     # Save results
     logging.info("Writting results into %s" % outfile)
@@ -310,8 +266,8 @@ def main():
     parser.add_argument("wav_file", action="store", help="Input WAV file")
     parser.add_argument("csv_file", action="store",
                         help="Input CSV file (to read MIDI notes for output)")
-    parser.add_argument("bpm", action="store", type=float,
-                        help="Beats Per Minute of the wave file")
+    parser.add_argument("-b", dest="bpm", action="store", type=float,
+                        default=None, help="Beats Per Minute of the wave file")
     parser.add_argument("-o", action="store", default="results.txt",
                         dest="output", help="Output results")
     parser.add_argument("-pk", action="store_true", default=False,
@@ -323,6 +279,9 @@ def main():
     parser.add_argument("-r", action="store", default=2, type=int,
                         dest="rho", help="Positive integer number for "
                         "calculating the score")
+    parser.add_argument("-ismir", action="store_true", default=False,
+                        dest="is_ismir", help="Produce the plots that appear "
+                        "on the ISMIR paper.")
     args = parser.parse_args()
     start_time = time.time()
 
@@ -331,8 +290,9 @@ def main():
         level=logging.INFO)
 
     # Run the algorithm
-    process(args.wav_file, args.csv_file, args.bpm, args.output, tol=args.tol,
-        read_pk=args.read_pk, ssm_read_pk=args.ssm_read_pk, rho=args.rho)
+    process(args.wav_file, args.csv_file, args.output, bpm=args.bpm,
+            tol=args.tol, read_pk=args.read_pk, ssm_read_pk=args.ssm_read_pk,
+            rho=args.rho, is_ismir=args.is_ismir)
 
     logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
 
