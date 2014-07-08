@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 """
-This script discovers polyphionic musical patterns from a mono 16-bit wav file 
-sampled at 44.1kHz. It also needs the BPMs of the audio track and the csv file 
+This script discovers polyphionic musical patterns from a mono 16-bit wav file
+sampled at 44.1kHz. It also needs the BPMs of the audio track and the csv file
 from which to read the MIDI pitches.
 
 To run the script:
-./motives_audio_poly.py wav_file csv_file bpm [-o result_file]
+./extractor.py wav_file csv_file bpm [-o result_file]
 
 where:
     wav_file: path to the 44.1kHz 16-bit mono wav file.
@@ -36,14 +36,8 @@ __version__ = "1.0"
 __email__ = "oriol@nyu.edu"
 
 import argparse
-import cPickle
-import csv
 import numpy as np
-import os
 import pylab as plt
-from scipy import spatial
-from scipy import signal
-import sys
 import time
 import utils
 
@@ -53,8 +47,9 @@ CSV_HEIGHT = 2
 CSV_DUR = 3
 CSV_STAFF = 4
 
+
 def occurrence_to_csv(start, end, score, h):
-    """Given an occurrence, return the csv formatted one into a 
+    """Given an occurrence, return the csv formatted one into a
         list (onset,midi)."""
     occ = []
     start = int(start)
@@ -70,6 +65,7 @@ def occurrence_to_csv(start, end, score, h):
                 occ.append([onset, midi, idx])
     return occ
 
+
 def patterns_to_csv(patterns, score, h):
     """Formats the patterns into the csv format."""
     offset = np.abs(int(utils.get_offset(score) / float(h)))
@@ -79,7 +75,7 @@ def patterns_to_csv(patterns, score, h):
         new_p = []
         for occ in p:
             start = occ[2] * h + offset - 1
-            end = occ[3] * h + offset + 1 # Add the diff offset
+            end = occ[3] * h + offset + 1  # Add the diff offset
             csv_occ = occurrence_to_csv(start, end, score, h)
             if csv_occ != []:
                 new_p.append(csv_occ)
@@ -88,8 +84,9 @@ def patterns_to_csv(patterns, score, h):
 
     return csv_patterns
 
+
 def obtain_patterns(segments, max_diff):
-    """Given a set of segments, find its occurrences and thus obtain the 
+    """Given a set of segments, find its occurrences and thus obtain the
     possible patterns."""
     patterns = []
     N = len(segments)
@@ -108,7 +105,7 @@ def obtain_patterns(segments, max_diff):
         new_p.append([s[0], s[1], s[0], s[1]])
         # Add repetition
         new_p.append(s)
-        
+
         checked_patterns[i] = 1
 
         # Find occurrences
@@ -124,103 +121,109 @@ def obtain_patterns(segments, max_diff):
 
     return patterns
 
+
 def plot_ssm(X):
-    Y = (X[3:,3:] + X[2:-1,2:-1] + X[1:-2,1:-2] + X[:-3,:-3]) / 3.
-    plt.imshow((1-Y), interpolation="nearest", cmap=plt.cm.gray)
+    Y = (X[3:, 3:] + X[2:-1, 2:-1] + X[1:-2, 1:-2] + X[:-3, :-3]) / 3.
+    plt.imshow((1 - Y), interpolation="nearest", cmap=plt.cm.gray)
     h = 1705
     m = 245.
     l = 2.0
-    plt.axvline(28 * h/m, color="k", linewidth=l)
-    plt.axvline(50 * h/m, color="k", linewidth=l)
-    plt.axvline(70 * h/m, color="k", linewidth=l)
-    plt.axvline(91 * h/m, color="k", linewidth=l)
-    plt.axvline(110 * h/m, color="k", linewidth=l)
-    plt.axvline(135 * h/m, color="k", linewidth=l)
-    plt.axvline(157 * h/m, color="k", linewidth=l)
-    plt.axvline(176 * h/m, color="k", linewidth=l)
-    plt.axvline(181 * h/m, color="k", linewidth=l)
-    plt.axvline(202 * h/m, color="k", linewidth=l)
+    plt.axvline(28 * h / m, color="k", linewidth=l)
+    plt.axvline(50 * h / m, color="k", linewidth=l)
+    plt.axvline(70 * h / m, color="k", linewidth=l)
+    plt.axvline(91 * h / m, color="k", linewidth=l)
+    plt.axvline(110 * h / m, color="k", linewidth=l)
+    plt.axvline(135 * h / m, color="k", linewidth=l)
+    plt.axvline(157 * h / m, color="k", linewidth=l)
+    plt.axvline(176 * h / m, color="k", linewidth=l)
+    plt.axvline(181 * h / m, color="k", linewidth=l)
+    plt.axvline(202 * h / m, color="k", linewidth=l)
 
-    plt.axhline(28 * h/m, color="k", linewidth=l)
-    plt.axhline(50 * h/m, color="k", linewidth=l)
-    plt.axhline(70 * h/m, color="k", linewidth=l)
-    plt.axhline(91 * h/m, color="k", linewidth=l)
-    plt.axhline(110 * h/m, color="k", linewidth=l)
-    plt.axhline(135 * h/m, color="k", linewidth=l)
-    plt.axhline(157 * h/m, color="k", linewidth=l)
-    plt.axhline(176 * h/m, color="k", linewidth=l)
-    plt.axhline(181 * h/m, color="k", linewidth=l)
-    plt.axhline(202 * h/m, color="k", linewidth=l)
+    plt.axhline(28 * h / m, color="k", linewidth=l)
+    plt.axhline(50 * h / m, color="k", linewidth=l)
+    plt.axhline(70 * h / m, color="k", linewidth=l)
+    plt.axhline(91 * h / m, color="k", linewidth=l)
+    plt.axhline(110 * h / m, color="k", linewidth=l)
+    plt.axhline(135 * h / m, color="k", linewidth=l)
+    plt.axhline(157 * h / m, color="k", linewidth=l)
+    plt.axhline(176 * h / m, color="k", linewidth=l)
+    plt.axhline(181 * h / m, color="k", linewidth=l)
+    plt.axhline(202 * h / m, color="k", linewidth=l)
     plt.show()
 
+
 def plot_chroma(C):
-    plt.imshow((1-C.T), interpolation="nearest", aspect="auto", cmap=plt.cm.gray)
-    plt.yticks(np.arange(12), ("A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"))
+    plt.imshow((1 - C.T), interpolation="nearest", aspect="auto",
+               cmap=plt.cm.gray)
+    plt.yticks(np.arange(12), ("A", "A#", "B", "C", "C#", "D", "D#", "E", "F",
+                               "F#", "G", "G#"))
     h = 1705
     m = 245.
     l = 2.0
-    plt.axvline(28 * h/m, color="k", linewidth=l)
-    plt.axvline(50 * h/m, color="k", linewidth=l)
-    plt.axvline(70 * h/m, color="k", linewidth=l)
-    plt.axvline(91 * h/m, color="k", linewidth=l)
-    plt.axvline(110 * h/m, color="k", linewidth=l)
-    plt.axvline(135 * h/m, color="k", linewidth=l)
-    plt.axvline(157 * h/m, color="k", linewidth=l)
-    plt.axvline(176 * h/m, color="k", linewidth=l)
-    plt.axvline(181 * h/m, color="k", linewidth=l)
-    plt.axvline(202 * h/m, color="k", linewidth=l)
+    plt.axvline(28 * h / m, color="k", linewidth=l)
+    plt.axvline(50 * h / m, color="k", linewidth=l)
+    plt.axvline(70 * h / m, color="k", linewidth=l)
+    plt.axvline(91 * h / m, color="k", linewidth=l)
+    plt.axvline(110 * h / m, color="k", linewidth=l)
+    plt.axvline(135 * h / m, color="k", linewidth=l)
+    plt.axvline(157 * h / m, color="k", linewidth=l)
+    plt.axvline(176 * h / m, color="k", linewidth=l)
+    plt.axvline(181 * h / m, color="k", linewidth=l)
+    plt.axvline(202 * h / m, color="k", linewidth=l)
     plt.xticks(np.empty(0), np.empty(0))
     plt.show()
 
-def plot_score_examples(X):
 
-    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1,ncols=3)
+def plot_score_examples(X):
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3)
     plt.subplots_adjust(wspace=.05)
     props = dict(boxstyle='round', facecolor='white', alpha=0.95)
 
     # Synthesized matrix
-    X1 = np.zeros((12,12))
+    X1 = np.zeros((12, 12))
     np.fill_diagonal(X1, 1)
     utils.compute_segment_score_omega(X1, 0, 0, 10, 0.35, 3)
-    ax1.imshow(1-X1, interpolation="nearest", cmap=plt.cm.gray)
+    ax1.imshow(1 - X1, interpolation="nearest", cmap=plt.cm.gray)
     textstr = "$\sigma$(1)=1\n$\sigma$(2)=0.36\n$\sigma$(3)=0.22"
-    ax1.text(5.7, 0.005, textstr, fontsize=14, 
+    ax1.text(5.7, 0.005, textstr, fontsize=14,
         verticalalignment='top', bbox=props)
-    ax1.set_xticks(np.empty(0),np.empty(0))
-    ax1.set_yticks(np.empty(0),np.empty(0))
+    ax1.set_xticks(np.empty(0), np.empty(0))
+    ax1.set_yticks(np.empty(0), np.empty(0))
 
     # Real matrix with an actual path
-    X2 = X[359:359+31, 1285:1285+31]
+    X2 = X[359:359 + 31, 1285:1285 + 31]
     utils.compute_segment_score_omega(X, 359, 1285, 31, 0.35, 3)
-    ax2.imshow(1-X2, interpolation="nearest", cmap=plt.cm.gray)
+    ax2.imshow(1 - X2, interpolation="nearest", cmap=plt.cm.gray)
     textstr = "$\sigma$(1)=-0.48\n$\sigma$(2)=0.44\n$\sigma$(3)=0.55"
-    ax2.text(15.00, 0.55, textstr, fontsize=14, 
+    ax2.text(15.00, 0.55, textstr, fontsize=14,
         verticalalignment='top', bbox=props)
-    ax2.set_xticks(np.empty(0),np.empty(0))
-    ax2.set_yticks(np.empty(0),np.empty(0))
+    ax2.set_xticks(np.empty(0), np.empty(0))
+    ax2.set_yticks(np.empty(0), np.empty(0))
 
     utils.compute_segment_score(X, 500, 1100, 31, 0.35)
     utils.compute_segment_score_omega(X, 500, 1100, 31, 0.35, 3)
-    X3 = X[500:500+31, 1100:1100+31]
-    ax3.imshow(1-X3, interpolation="nearest", cmap=plt.cm.gray)
+    X3 = X[500:500 + 31, 1100:1100 + 31]
+    ax3.imshow(1 - X3, interpolation="nearest", cmap=plt.cm.gray)
     textstr = "$\sigma$(1)=-0.46\n$\sigma$(2)=0.21\n$\sigma$(3)=0.32"
-    ax3.text(15.00, 0.55, textstr, fontsize=14, 
+    ax3.text(15.00, 0.55, textstr, fontsize=14,
         verticalalignment='top', bbox=props)
-    ax3.set_xticks(np.empty(0),np.empty(0))
-    ax3.set_yticks(np.empty(0),np.empty(0))
+    ax3.set_xticks(np.empty(0), np.empty(0))
+    ax3.set_yticks(np.empty(0), np.empty(0))
 
     plt.show()
 
-def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False, 
+
+def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
             read_pk=False, rho=2):
     """Main process to find the patterns in a polyphonic score."""
     min_notes = 8
     max_diff_notes = 1
 
     # Hop size
-    h = bpm / 60. / 8.  # /8 works better than /4, but it takes longer to process
+    h = bpm / 60. / 8.  # /8 works better than /4, but it takes longer
+                        # to process
 
-    if not ssm_read_pk and False: # TODO Remove False!
+    if not ssm_read_pk and False:  # TODO Remove False!
         # Read WAV file
         print "Reading the WAV file..."
         C = utils.compute_audio_chromagram(wav_file, h)
@@ -232,6 +235,7 @@ def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
         X = utils.compute_key_inv_ssm(C, h)
 
         utils.write_cPickle(csv_file + "-audio-ssm.pk", X)
+
     X = utils.read_cPickle(csv_file + "-audio-ssm.pk")
 
     # plot_score_examples(X)
@@ -246,7 +250,7 @@ def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
         # Find the segments inside the self similarity matrix
         print "Finding segments in the self-similarity matrix..."
         max_diff = int(max_diff_notes / float(h))
-        min_dur = int(np.ceil(min_notes/float(h)))
+        min_dur = int(np.ceil(min_notes / float(h)))
         print min_dur, min_notes, h
         if not read_pk and False:
             segments = []
@@ -256,21 +260,21 @@ def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
                 tol -= 0.05
             utils.write_cPickle(csv_file + "-audio.pk", segments)
         segments = utils.read_cPickle(csv_file + "-audio.pk")
-        
+
         for s in segments:
             line_strength = 4
             np.fill_diagonal(X[s[0]:s[1], s[2]:s[3]], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2]+1:s[3]+1], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2]+2:s[3]+2], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2]+3:s[3]+3], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2]+4:s[3]+4], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2]-1:s[3]-1], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2]-2:s[3]-2], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2]-3:s[3]-3], line_strength)
-            np.fill_diagonal(X[s[0]:s[1], s[2]-4:s[3]-4], line_strength)
-        for i in xrange(X.shape[0]-15):
-            for j in xrange(i+15):
-                X[i,j] = 0
+            np.fill_diagonal(X[s[0]:s[1], s[2] + 1:s[3] + 1], line_strength)
+            np.fill_diagonal(X[s[0]:s[1], s[2] + 2:s[3] + 2], line_strength)
+            np.fill_diagonal(X[s[0]:s[1], s[2] + 3:s[3] + 3], line_strength)
+            np.fill_diagonal(X[s[0]:s[1], s[2] + 4:s[3] + 4], line_strength)
+            np.fill_diagonal(X[s[0]:s[1], s[2] - 1:s[3] - 1], line_strength)
+            np.fill_diagonal(X[s[0]:s[1], s[2] - 2:s[3] - 2], line_strength)
+            np.fill_diagonal(X[s[0]:s[1], s[2] - 3:s[3] - 3], line_strength)
+            np.fill_diagonal(X[s[0]:s[1], s[2] - 4:s[3] - 4], line_strength)
+        for i in xrange(X.shape[0] - 15):
+            for j in xrange(i + 15):
+                X[i, j] = 0
 
         plt.imshow(X, interpolation="nearest", cmap=plt.cm.gray)
         plt.xticks(np.empty(0), np.empty(0))
@@ -293,32 +297,35 @@ def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
     # Alright, we're done :D
     print "Algorithm finished."
 
+
 def main():
-    """Main function to run the audio polyphonic version of patterns finding."""
-    parser = argparse.ArgumentParser(description=
-        "Discovers the audio polyphonic motives given a WAV file and a CSV file",
+    """Main function to run the audio polyphonic version of patterns
+        finding."""
+    parser = argparse.ArgumentParser(
+        description="Discovers the audio polyphonic motives given a WAV file"
+        " and a CSV file",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("wav_file", action="store",
-        help="Input WAV file")
+    parser.add_argument("wav_file", action="store", help="Input WAV file")
     parser.add_argument("csv_file", action="store",
-        help="Input CSV file (to read MIDI notes for output)")
+                        help="Input CSV file (to read MIDI notes for output)")
     parser.add_argument("bpm", action="store", type=float,
-        help="Beats Per Minute of the wave file")
-    parser.add_argument("-o",action="store", default="results.txt", 
-        dest="output", help="Output results")
-    parser.add_argument("-pk",action="store_true", default=False, dest="read_pk",
-        help="Read Pickle File")
-    parser.add_argument("-spk",action="store_true", default=False, 
-        dest="ssm_read_pk", help="Read SSM Pickle File")
-    parser.add_argument("-th",action="store", default=0.35, type=float, 
-        dest="tol", help="Tolerance level, from 0 to 1")
-    parser.add_argument("-r",action="store", default=2, type=int, 
-        dest="rho", help="Positive integer number for calculating the score")
+                        help="Beats Per Minute of the wave file")
+    parser.add_argument("-o", action="store", default="results.txt",
+                        dest="output", help="Output results")
+    parser.add_argument("-pk", action="store_true", default=False,
+                        dest="read_pk", help="Read Pickle File")
+    parser.add_argument("-spk", action="store_true", default=False,
+                        dest="ssm_read_pk", help="Read SSM Pickle File")
+    parser.add_argument("-th", action="store", default=0.35, type=float,
+                        dest="tol", help="Tolerance level, from 0 to 1")
+    parser.add_argument("-r", action="store", default=2, type=int,
+                        dest="rho", help="Positive integer number for "
+                        "calculating the score")
     args = parser.parse_args()
     start_time = time.time()
-   
+
     # Run the algorithm
-    process(args.wav_file, args.csv_file, args.bpm, args.output, tol=args.tol, 
+    process(args.wav_file, args.csv_file, args.bpm, args.output, tol=args.tol,
         read_pk=args.read_pk, ssm_read_pk=args.ssm_read_pk, rho=args.rho)
 
     print "Done! Took %.2f seconds." % (time.time() - start_time)
