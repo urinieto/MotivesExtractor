@@ -36,6 +36,7 @@ __version__ = "1.0"
 __email__ = "oriol@nyu.edu"
 
 import argparse
+import logging
 import numpy as np
 import pylab as plt
 import time
@@ -223,43 +224,44 @@ def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
     h = bpm / 60. / 8.  # /8 works better than /4, but it takes longer
                         # to process
 
-    if not ssm_read_pk:  # TODO Remove False!
+    if not ssm_read_pk:
         # Read WAV file
-        print "Reading the WAV file..."
+        logging.info("Reading the WAV file...")
         C = utils.compute_audio_chromagram(wav_file, h)
 
         #plot_chroma(C)
 
         # Compute the self similarity matrix
-        print "Computing key-invariant self-similarity matrix..."
+        logging.info("Computing key-invariant self-similarity matrix...")
         X = utils.compute_key_inv_ssm(C, h)
 
         utils.write_cPickle(csv_file + "-audio-ssm.pk", X)
-
-    X = utils.read_cPickle(csv_file + "-audio-ssm.pk")
+    else:
+        X = utils.read_cPickle(csv_file + "-audio-ssm.pk")
 
     # plot_score_examples(X)
     # plot_ssm(X)
 
     # Read CSV file
-    print "Reading the CSV file for MIDI pitches..."
+    logging.info("Reading the CSV file for MIDI pitches...")
     score = utils.read_csv(csv_file)
 
     csv_patterns = []
     while csv_patterns == []:
         # Find the segments inside the self similarity matrix
-        print "Finding segments in the self-similarity matrix..."
+        logging.info("Finding segments in the self-similarity matrix...")
         max_diff = int(max_diff_notes / float(h))
         min_dur = int(np.ceil(min_notes / float(h)))
         print min_dur, min_notes, h
-        if not read_pk and False:
+        if not read_pk:
             segments = []
             while segments == []:
                 print "\ttrying tolerance", tol
                 segments = utils.find_segments(X, min_dur, th=tol, rho=rho)
                 tol -= 0.05
             utils.write_cPickle(csv_file + "-audio.pk", segments)
-        segments = utils.read_cPickle(csv_file + "-audio.pk")
+        else:
+            segments = utils.read_cPickle(csv_file + "-audio.pk")
 
         for s in segments:
             line_strength = 4
@@ -282,7 +284,7 @@ def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
         plt.show()
 
         # Obtain the patterns from the segments and split them if needed
-        print "Obtaining the patterns from the segments..."
+        logging.info("Obtaining the patterns from the segments...")
         patterns = obtain_patterns(segments, max_diff)
         #patterns = utils.split_patterns(patterns, max_diff, min_dur)
 
@@ -291,11 +293,11 @@ def process(wav_file, csv_file, bpm, outfile, tol=0.95, ssm_read_pk=False,
         tol -= 0.05
 
     # Save results
-    print "Writting results into %s" % outfile
+    logging.info("Writting results into %s" % outfile)
     utils.save_results(csv_patterns, outfile=outfile)
 
     # Alright, we're done :D
-    print "Algorithm finished."
+    logging.info("Algorithm finished.")
 
 
 def main():
@@ -324,11 +326,15 @@ def main():
     args = parser.parse_args()
     start_time = time.time()
 
+    # Setup the logger
+    logging.basicConfig(format='%(asctime)s: %(levelname)s: %(message)s',
+        level=logging.INFO)
+
     # Run the algorithm
     process(args.wav_file, args.csv_file, args.bpm, args.output, tol=args.tol,
         read_pk=args.read_pk, ssm_read_pk=args.ssm_read_pk, rho=args.rho)
 
-    print "Done! Took %.2f seconds." % (time.time() - start_time)
+    logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
 
 if __name__ == "__main__":
     main()
