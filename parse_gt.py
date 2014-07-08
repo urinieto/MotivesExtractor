@@ -15,6 +15,7 @@ import glob
 import logging
 import os
 import time
+import utils
 
 
 def get_out_file(patterns, out_dir):
@@ -35,7 +36,9 @@ def get_out_file(patterns, out_dir):
     """
     assert len(patterns) > 0
     name_split = patterns[0][0].split("/")
-    return os.path.join(out_dir, name_split[2] + "-" + name_split[3] + ".txt")
+    idx_offset = name_split.index("groundTruth") - 1
+    return os.path.join(out_dir, name_split[idx_offset + 2] + "-" +
+                        name_split[idx_offset + 3] + ".txt")
 
 
 def parse_patterns(patterns, out_file):
@@ -108,6 +111,9 @@ def process(jku_dir, out_dir):
     out_dir: string
         Directory in which to put the parsed files.
     """
+    # Make sure the output dir exists
+    utils.ensure_dir(out_dir)
+
     # Get all the music pieces in the ground truth
     pieces = glob.glob(os.path.join(jku_dir, "groundTruth", "*"))
 
@@ -117,6 +123,7 @@ def process(jku_dir, out_dir):
     # Main loop to retrieve all the patterns from the GT
     all_patterns = []
     for piece in pieces:
+        logging.info("Parsing piece %s" % piece)
         for type in types:
             # Get all the annotators for the current piece
             annotators = glob.glob(os.path.join(piece, type,
