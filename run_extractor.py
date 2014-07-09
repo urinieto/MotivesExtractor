@@ -1,36 +1,75 @@
 #!/usr/bin/env python
+"""
+Script to run the extractor on an entire folder.
+
+To run the script:
+./run_extractor.py jku_input outputdir
+
+For more options:
+./run_extractor.py -h
+
+#############
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+__author__ = "Oriol Nieto"
+__copyright__ = "Copyright 2013, Music and Audio Research Lab (MARL)"
+__license__ = "GPL"
+__version__ = "1.0"
+__email__ = "oriol@nyu.edu"
+
 import argparse
 import glob
 import logging
 import os
 import time
-import exctractor as EX
+from joblib import Parallel, delayed
+
+import extractor as EX
+import utils
 
 
-def process_audio_poly(wavdir, tol, ssm_read_pk, read_pk):
+def process_piece(wav, outdir, tol, ssm_read_pk, read_pk):
     poly_str = "poly"
-    files = glob.glob(os.path.join(wavdir, "*-" + poly_str + ".wav"))
-    for f in files:
-        f_base = os.path.basename(f)
-        base_name = f_base.split(".")[0]
-        if base_name == "wtc2f20-" + poly_str:
-            out = "bach_wtc2f20"
-        elif base_name == "sonata01-3-" + poly_str:
-            out = "beet_sonata01-3"
-        elif base_name == "mazurka24-4-" + poly_str:
-            out = "chop_mazurka24-4"
-        elif base_name == "silverswan-" + poly_str:
-            out = "gbns_silverswan"
-        elif base_name == "sonata04-2-" + poly_str:
-            out = "mzrt_sonata04-2"
-        wav = f.replace(".csv", ".wav")
+    f_base = os.path.basename(wav)
+    base_name = f_base.split(".")[0]
+    if base_name == "wtc2f20-" + poly_str:
+        out = "bach_wtc2f20"
+    elif base_name == "sonata01-3-" + poly_str:
+        out = "beet_sonata01-3"
+    elif base_name == "mazurka24-4-" + poly_str:
+        out = "chop_mazurka24-4"
+    elif base_name == "silverswan-" + poly_str:
+        out = "gbns_silverswan"
+    elif base_name == "sonata04-2-" + poly_str:
+        out = "mzrt_sonata04-2"
+    csv = wav.replace(".wav", ".csv")
 
-        print "Running algorithm on", f_base
-        out = os.path.join("JKUPDD-Aug2013", "matlab", "pattDiscOut",
-                           "nf4", out) + "_algo1.txt"
-        print "./extractor.py %s %s -o %s -th %f" % (wav, f, out, tol)
-        EX.process(wav, out, csv_file=f, tol=tol, ssm_read_pk=ssm_read_pk,
-                   read_pk=read_pk)
+    logging.info("Running algorithm on %s" % f_base)
+    out = os.path.join(outdir, out) + ".txt"
+    #print "./extractor.py %s -c %s -o %s -th %f" % (wav, csv, out, tol)
+    EX.process(wav, out, csv_file=csv, tol=tol, ssm_read_pk=ssm_read_pk,
+               read_pk=read_pk)
+
+
+def process_audio_poly(wavdir, outdir, tol, ssm_read_pk, read_pk, n_jobs=4):
+    utils.ensure_dir(outdir)
+    files = glob.glob(os.path.join(wavdir, "*.wav"))
+    Parallel(n_jobs=n_jobs)(delayed(process_piece)(
+        wav, outdir, tol, ssm_read_pk, read_pk)
+        for wav in files)
 
 
 def main():
@@ -39,6 +78,7 @@ def main():
         "Runs the algorithm of pattern discovery on the polyphonic csv files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("wavdir", action="store", help="Input WAV folder")
+    parser.add_argument("outdir", action="store", help="Output Folder")
     parser.add_argument("-pk", action="store_true", default=False,
                         dest="read_pk", help="Read Pickle File")
     parser.add_argument("-th", action="store", default=0.35, type=float,
@@ -48,6 +88,9 @@ def main():
                         "score")
     parser.add_argument("-spk", action="store_true", default=False,
                         dest="ssm_read_pk", help="Read SSM Pickle File")
+    parser.add_argument("-j", action="store", default=4, type=int,
+                        dest="n_jobs",
+                        help="Number of processors to use to divide the task.")
 
     args = parser.parse_args()
     start_time = time.time()
@@ -57,8 +100,9 @@ def main():
                         level=logging.INFO)
 
     # Run the algorithm
-    process_audio_poly(args.wavdir, tol=args.tol, ssm_read_pk=args.ssm_read_pk,
-                       read_pk=args.read_pk)
+    process_audio_poly(args.wavdir, args.outdir, tol=args.tol,
+                       ssm_read_pk=args.ssm_read_pk,
+                       read_pk=args.read_pk, n_jobs=args.n_jobs)
 
     logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
 
