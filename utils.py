@@ -25,6 +25,7 @@ import os
 import pylab as plt
 from scipy import spatial
 import subprocess
+import logging
 
 from scikits import audiolab
 
@@ -465,8 +466,8 @@ def compute_spectrogram(x, wlen, fs):
     nstep = N / 2        # Hop size of 0.5 * N
     nwin = N
 
-    print "Computing Spectrogram: fs: %d, hop size: %d, FFT size: %d" % \
-        (fs, nstep, N)
+    logging.info("Computing Spectrogram: fs: %d, hop size: %d, FFT size: %d" %
+                 (fs, nstep, N))
 
     window = np.blackman(nwin)
     nn = range(nwin, len(x), nstep)

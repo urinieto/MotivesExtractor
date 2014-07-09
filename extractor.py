@@ -5,13 +5,14 @@ sampled at 44.1kHz. It also needs the BPMs of the audio track and the csv file
 from which to read the MIDI pitches.
 
 To run the script:
-./extractor.py wav_file csv_file bpm [-o result_file]
+./extractor.py wav_file [-o result_file]
 
 where:
     wav_file: path to the 44.1kHz 16-bit mono wav file.
-    csv_file: path to its correspondent csv file.
-    bpm: float representing the beats per minute of the piece.
     result_file: output file with the results ("results.txt" as default).
+
+For more ooptions:
+./extractor.py -h
 
 #############
 
@@ -54,7 +55,7 @@ CSV_STAFF = 4
 def get_bpm(wav_file):
     """Gets the correct bpm based on the wav_file name. If the wav_file is not
     contained in the JKU dataset, raises error.
-    
+
     Parameters
     ----------
     wav_file : str
@@ -78,15 +79,35 @@ def get_bpm(wav_file):
     return bpm_dict[wav_file]
 
 
+def print_patterns(patterns, h):
+    """Prints the patterns and the occurrences included in pattterns.
+
+    Parameters
+    ----------
+    patterns : list
+        Patterns list with all of its occurrences.
+    h : float
+        Hop size.
+    """
+    logging.info("Printing Extracted Motives (all times are in seconds):")
+    for i, p in enumerate(patterns):
+        print "Pattern %d:" % (i + 1)
+        for j, occ in enumerate(p):
+            # Get start and end times
+            start = occ[2] * h / 2.
+            end = occ[3] * h / 2.
+            print "\tOccurrence %d: (%.2f, %.2f)" % (j + 1, start, end)
+
+
 def occurrence_to_csv(start, end, score, h):
     """Given an occurrence, return the csv formatted one into a
         list (onset,midi).
 
     Parameters
     ----------
-    start : int
+    start : float
         Start index of the occurrence.
-    end : int
+    end : float
         End index of the occurrence.
     score : list
         The score of the piece (read form CSV format).
@@ -239,8 +260,8 @@ def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False):
     return X
 
 
-def process(wav_file, csv_file, outfile, bpm=None, tol=0.95, ssm_read_pk=False,
-            read_pk=False, rho=2, is_ismir=False):
+def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
+            ssm_read_pk=False, read_pk=False, rho=2, is_ismir=False):
     """Main process to find the patterns in a polyphonic audio file.
 
     Parameters
@@ -280,40 +301,45 @@ def process(wav_file, csv_file, outfile, bpm=None, tol=0.95, ssm_read_pk=False,
     X = compute_ssm(wav_file, h, ssm_read_pk, is_ismir)
 
     # Read CSV file
-    logging.info("Reading the CSV file for MIDI pitches...")
-    score = utils.read_csv(csv_file)
+    if csv_file is not None:
+        logging.info("Reading the CSV file for MIDI pitches...")
+        score = utils.read_csv(csv_file)
 
-    csv_patterns = []
-    while csv_patterns == []:
+    patterns = []
+    while patterns == []:
         # Find the segments inside the self similarity matrix
         logging.info("Finding segments in the self-similarity matrix...")
         max_diff = int(max_diff_notes / float(h))
         min_dur = int(np.ceil(min_notes / float(h)))
-        #print min_dur, min_notes, h
+        #print min_dur, min_notes, h, max_diff
         if not read_pk:
             segments = []
             while segments == []:
-                logging.info("\ttrying tolerance" % tol)
+                logging.info("\ttrying tolerance %.2f" % tol)
                 segments = utils.find_segments(X, min_dur, th=tol, rho=rho)
                 tol -= 0.05
-            utils.write_cPickle(csv_file + "-audio.pk", segments)
+            utils.write_cPickle(wav_file + "-audio.pk", segments)
         else:
-            segments = utils.read_cPickle(csv_file + "-audio.pk")
+            segments = utils.read_cPickle(wav_file + "-audio.pk")
 
         # Obtain the patterns from the segments and split them if needed
         logging.info("Obtaining the patterns from the segments...")
         patterns = obtain_patterns(segments, max_diff)
 
-        # Formatting csv patterns
-        csv_patterns = patterns_to_csv(patterns, score, h)
+        # Decrease tolerance in case we couldn't find any patterns
         tol -= 0.05
+
+    # Formatting csv patterns and save results
+    if csv_file is not None:
+        csv_patterns = patterns_to_csv(patterns, score, h)
+        logging.info("Writting results into %s" % outfile)
+        utils.save_results(csv_patterns, outfile=outfile)
+    else:
+        # If not csv, just print the results on the screen
+        print_patterns(patterns, h)
 
     if is_ismir:
         ismir.plot_segments(X, segments)
-
-    # Save results
-    logging.info("Writting results into %s" % outfile)
-    utils.save_results(csv_patterns, outfile=outfile)
 
     # Alright, we're done :D
     logging.info("Algorithm finished.")
@@ -327,7 +353,7 @@ def main():
         " and a CSV file",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("wav_file", action="store", help="Input WAV file")
-    parser.add_argument("csv_file", action="store",
+    parser.add_argument("-c", dest="csv_file", action="store", default=None,
                         help="Input CSV file (to read MIDI notes for output)")
     parser.add_argument("-b", dest="bpm", action="store", type=float,
                         default=None, help="Beats Per Minute of the wave file")
@@ -353,7 +379,7 @@ def main():
         level=logging.INFO)
 
     # Run the algorithm
-    process(args.wav_file, args.csv_file, args.output, bpm=args.bpm,
+    process(args.wav_file, args.output, csv_file=args.csv_file, bpm=args.bpm,
             tol=args.tol, read_pk=args.read_pk, ssm_read_pk=args.ssm_read_pk,
             rho=args.rho, is_ismir=args.is_ismir)
 
