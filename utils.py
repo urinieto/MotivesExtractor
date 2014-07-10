@@ -24,7 +24,6 @@ import numpy as np
 import os
 import pylab as plt
 from scipy import spatial
-import subprocess
 import logging
 
 from scikits import audiolab
@@ -447,11 +446,7 @@ def read_wav(wav_file):
     assert os.path.isfile(wav_file), \
         'ERROR: wivefile file %s does not exist' % wav_file
 
-    tmp_wav = "tmp.wav"
-    cmd = "sox -S %s -r 11025 -b 16 -c 1 %s" % (wav_file, tmp_wav)
-    subprocess.call(cmd.split(" "))
-
-    x, fs, enc = audiolab.wavread(tmp_wav)
+    x, fs, enc = audiolab.wavread(wav_file)
     if len(x.shape) >= 2:
         x = x[:, 0]  # Make mono
 

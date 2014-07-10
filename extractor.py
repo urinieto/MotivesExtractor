@@ -288,8 +288,6 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
         Produce the plots that appear on the ISMIR paper.
     """
 
-    print wav_file, outfile, csv_file, bpm, tol, ssm_read_pk, read_pk, rho, is_ismir
-
     # Get the correct bpm if needed
     if bpm is None:
         bpm = get_bpm(wav_file)
