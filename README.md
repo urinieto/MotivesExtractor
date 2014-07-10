@@ -15,4 +15,6 @@ Scipy
 
 joblib
 
+pandas
+
 mir_eval

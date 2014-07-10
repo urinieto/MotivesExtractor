@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+"""
+Script to run the evaluations.
+
+To run the script:
+    ./eval.py annotations/ estimations/
+
+Both directories must have the same file names.
+
+#############
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+__author__ = "Oriol Nieto"
+__copyright__ = "Copyright 2013, Music and Audio Research Lab (MARL)"
+__license__ = "GPL"
+__version__ = "1.0"
+__email__ = "oriol@nyu.edu"
+
+import argparse
+import glob
+import logging
+import mir_eval
+import os
+import time
+import pandas as pd
+
+
+def process(refdir, estdir):
+    references = glob.glob(os.path.join(refdir, "*-polyphonic.txt"))
+    estimations = glob.glob(os.path.join(estdir, "*.txt"))
+    results = pd.DataFrame()
+    for ref, est in zip(references, estimations):
+        assert os.path.basename(ref) == os.path.basename(est)
+        ref_pat = mir_eval.io.load_patterns(ref)
+        est_pat = mir_eval.io.load_patterns(est)
+
+        res = {}
+        res["Fest"], res["Pest"], res["Rest"] = \
+            mir_eval.pattern.establishment_FPR(ref_pat, est_pat)
+        res["Focc.75"], res["Pocc.75"], res["Rocc.75"] = \
+            mir_eval.pattern.occurrence_FPR(ref_pat, est_pat, thres=.75)
+        res["F3"], res["P3"], res["R3"] = \
+            mir_eval.pattern.three_layer_FPR(ref_pat, est_pat)
+        res["Focc.5"], res["Pocc.5"], res["Rocc.5"] = \
+            mir_eval.pattern.occurrence_FPR(ref_pat, est_pat, thres=.5)
+        res["F"], res["P"], res["R"] = \
+            mir_eval.pattern.standard_FPR(ref_pat, est_pat)
+        results = results.append(res, ignore_index=True)
+
+    logging.info("Results per piece:")
+    print results
+    logging.info("Average Results:")
+    print results.mean()
+
+
+def main():
+    """Main function."""
+    parser = argparse.ArgumentParser(description=
+        "Evals the algorithm using mir_eval",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("refdir", action="store",
+                        help="Directory with the annotations")
+    parser.add_argument("estdir", action="store",
+                        help="Directory with the estimations")
+
+    args = parser.parse_args()
+    start_time = time.time()
+
+    # Setup the logger
+    logging.basicConfig(format='%(asctime)s: %(levelname)s: %(message)s',
+                        level=logging.INFO)
+
+    # Run the algorithm
+    process(args.refdir, args.estdir)
+
+    logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
+
+if __name__ == "__main__":
+    main()

@@ -1,4 +1,6 @@
 *.wav
 *.swp
 *.pyc
+*.pk
+.DS_Store
 
