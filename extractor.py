@@ -4,6 +4,13 @@ This script discovers polyphionic musical patterns from a mono 16-bit wav file
 sampled at 44.1kHz. It also needs the BPMs of the audio track and the csv file
 from which to read the MIDI pitches.
 
+It is based on:
+
+Nieto, O., Farbood, M., Identifying Polyphonic Musical Patterns From Audio
+Recordings Using Music Segmentation Techniques. Proc. of the 15th International
+Society for Music Information Retrieval Conference (ISMIR).
+Taipei, Taiwan, 2014.
+
 To run the script:
 ./extractor.py wav_file [-o result_file]
 
@@ -99,7 +106,7 @@ def print_patterns(patterns, h):
             print "\tOccurrence %d: (%.2f, %.2f)" % (j + 1, start, end)
 
 
-def occurrence_to_csv(start, end, midi_score, h):
+def occurrence_to_csv(start, end, midi_score):
     """Given an occurrence, return the csv formatted one into a
         list (onset,midi).
 
@@ -111,8 +118,6 @@ def occurrence_to_csv(start, end, midi_score, h):
         End index of the occurrence.
     midi_score : list
         The score of the piece (read form CSV format).
-    h : float
-        Hop size for the SSM.
 
     Returns
     -------
@@ -120,10 +125,9 @@ def occurrence_to_csv(start, end, midi_score, h):
         Occurrence in the csv format list(onset, midi).
     """
     occ = []
-    # TODO: Divide over 2?
     start = int(start)
     end = int(end)
-    h = 0.25
+    h = 0.25  # Resolution of csv files
     for i in np.arange(start, end, h):
         idxs = np.argwhere(midi_score[:, CSV_ONTIME] == i)
         # Get all available staves
@@ -159,7 +163,7 @@ def patterns_to_csv(patterns, midi_score, h):
         for occ in p:
             start = occ[2] * h + offset - 1
             end = occ[3] * h + offset + 1  # Add the diff offset
-            csv_occ = occurrence_to_csv(start, end, midi_score, h)
+            csv_occ = occurrence_to_csv(start, end, midi_score)
             if csv_occ != []:
                 new_p.append(csv_occ)
         if new_p != [] and len(new_p) >= 2:

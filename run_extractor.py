@@ -5,6 +5,8 @@ Script to run the extractor on an entire folder.
 To run the script:
 ./run_extractor.py jku_input outputdir
 
+This should procude the output reported in the ISMIR paper.
+
 For more options:
 ./run_extractor.py -h
 
@@ -81,7 +83,7 @@ def main():
     parser.add_argument("outdir", action="store", help="Output Folder")
     parser.add_argument("-pk", action="store_true", default=False,
                         dest="read_pk", help="Read Pickle File")
-    parser.add_argument("-th", action="store", default=0.35, type=float,
+    parser.add_argument("-th", action="store", default=0.33, type=float,
                         dest="tol", help="Tolerance level, from 0 to 1")
     parser.add_argument("-r", action="store", default=2, type=int, dest="rho",
                         help="Positive integer number for calculating the "
