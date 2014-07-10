@@ -61,7 +61,7 @@ def process_piece(wav, outdir, tol, ssm_read_pk, read_pk):
 
     logging.info("Running algorithm on %s" % f_base)
     out = os.path.join(outdir, out) + ".txt"
-    print "./extractor.py %s -c %s -o %s -th %f" % (wav, csv, out, tol)
+    #print "./extractor.py %s -c %s -o %s -th %f" % (wav, csv, out, tol)
     EX.process(wav, out, csv_file=csv, tol=tol, ssm_read_pk=ssm_read_pk,
                read_pk=read_pk)
 
