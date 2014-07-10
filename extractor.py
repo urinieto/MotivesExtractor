@@ -99,7 +99,7 @@ def print_patterns(patterns, h):
             print "\tOccurrence %d: (%.2f, %.2f)" % (j + 1, start, end)
 
 
-def occurrence_to_csv(start, end, score, h):
+def occurrence_to_csv(start, end, midi_score, h):
     """Given an occurrence, return the csv formatted one into a
         list (onset,midi).
 
@@ -109,7 +109,7 @@ def occurrence_to_csv(start, end, score, h):
         Start index of the occurrence.
     end : float
         End index of the occurrence.
-    score : list
+    midi_score : list
         The score of the piece (read form CSV format).
     h : float
         Hop size for the SSM.
@@ -120,28 +120,29 @@ def occurrence_to_csv(start, end, score, h):
         Occurrence in the csv format list(onset, midi).
     """
     occ = []
+    # TODO: Divide over 2?
     start = int(start)
     end = int(end)
     h = 0.25
     for i in np.arange(start, end, h):
-        idxs = np.argwhere(score[:, CSV_ONTIME] == i)
+        idxs = np.argwhere(midi_score[:, CSV_ONTIME] == i)
         # Get all available staves
         if len(idxs) > 0:
             for idx in idxs:
-                onset = score[idx, CSV_ONTIME][0]
-                midi = score[idx, CSV_MIDI][0]
+                onset = midi_score[idx, CSV_ONTIME][0]
+                midi = midi_score[idx, CSV_MIDI][0]
                 occ.append([onset, midi, idx])
     return occ
 
 
-def patterns_to_csv(patterns, score, h):
+def patterns_to_csv(patterns, midi_score, h):
     """Formats the patterns into the csv format.
 
     Parameters
     ----------
     pattersn : list
         List of patterns with its occurrences.
-    score : list
+    midi_score : list
         The score of the piece (read from CSV).
     h : float
         Hop size of the ssm.
@@ -151,14 +152,14 @@ def patterns_to_csv(patterns, score, h):
     csv_patterns : list
         List of the patterns in the csv format to be analyzed by MIREX.
     """
-    offset = np.abs(int(utils.get_offset(score) / float(h)))
+    offset = np.abs(int(utils.get_offset(midi_score) / float(h)))
     csv_patterns = []
     for p in patterns:
         new_p = []
         for occ in p:
             start = occ[2] * h + offset - 1
             end = occ[3] * h + offset + 1  # Add the diff offset
-            csv_occ = occurrence_to_csv(start, end, score, h)
+            csv_occ = occurrence_to_csv(start, end, midi_score, h)
             if csv_occ != []:
                 new_p.append(csv_occ)
         if new_p != [] and len(new_p) >= 2:
@@ -269,7 +270,7 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
     wav_file : str
         Path to the wav file to be analyzed.
     csv_file : str
-        Path to the csv containing the score of the input audio file
+        Path to the csv containing the midi_score of the input audio file
         (needed to produce a result that can be read for JKU dataset).
     outfile : str
         Path to file to save the results.
@@ -287,13 +288,15 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
         Produce the plots that appear on the ISMIR paper.
     """
 
+    print wav_file, outfile, csv_file, bpm, tol, ssm_read_pk, read_pk, rho, is_ismir
+
     # Get the correct bpm if needed
     if bpm is None:
         bpm = get_bpm(wav_file)
 
     # Algorithm parameters
     min_notes = 8
-    max_diff_notes = 1
+    max_diff_notes = 4
     h = bpm / 60. / 8.  # Hop size /8 works better than /4, but it takes longer
                         # to process
 
@@ -303,10 +306,11 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
     # Read CSV file
     if csv_file is not None:
         logging.info("Reading the CSV file for MIDI pitches...")
-        score = utils.read_csv(csv_file)
+        midi_score = utils.read_csv(csv_file)
 
     patterns = []
-    while patterns == []:
+    csv_patterns = []
+    while patterns == [] or csv_patterns == []:
         # Find the segments inside the self similarity matrix
         logging.info("Finding segments in the self-similarity matrix...")
         max_diff = int(max_diff_notes / float(h))
@@ -329,9 +333,14 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
         # Decrease tolerance in case we couldn't find any patterns
         tol -= 0.05
 
+        # Get the csv patterns if they exist
+        if csv_file is not None:
+            csv_patterns = patterns_to_csv(patterns, midi_score, h)
+        else:
+            csv_patterns = [0]
+
     # Formatting csv patterns and save results
     if csv_file is not None:
-        csv_patterns = patterns_to_csv(patterns, score, h)
         logging.info("Writting results into %s" % outfile)
         utils.save_results(csv_patterns, outfile=outfile)
     else:

@@ -15,4 +15,6 @@ Scipy
 
 SoX
 
+joblib
+
 mir_eval

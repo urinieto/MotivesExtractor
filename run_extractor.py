@@ -46,20 +46,20 @@ def process_piece(wav, outdir, tol, ssm_read_pk, read_pk):
     f_base = os.path.basename(wav)
     base_name = f_base.split(".")[0]
     if base_name == "wtc2f20-" + poly_str:
-        out = "bach_wtc2f20"
+        out = "bachBWV889Fg-polyphonic"
     elif base_name == "sonata01-3-" + poly_str:
-        out = "beet_sonata01-3"
+        out = "beethovenOp2No1Mvt3-polyphonic"
     elif base_name == "mazurka24-4-" + poly_str:
-        out = "chop_mazurka24-4"
+        out = "chopinOp24No4-polyphonic"
     elif base_name == "silverswan-" + poly_str:
-        out = "gbns_silverswan"
+        out = "gibbonsSilverSwan1612-polyphonic"
     elif base_name == "sonata04-2-" + poly_str:
-        out = "mzrt_sonata04-2"
+        out = "mozartK282Mvt2-polyphonic"
     csv = wav.replace(".wav", ".csv")
 
     logging.info("Running algorithm on %s" % f_base)
     out = os.path.join(outdir, out) + ".txt"
-    #print "./extractor.py %s -c %s -o %s -th %f" % (wav, csv, out, tol)
+    print "./extractor.py %s -c %s -o %s -th %f" % (wav, csv, out, tol)
     EX.process(wav, out, csv_file=csv, tol=tol, ssm_read_pk=ssm_read_pk,
                read_pk=read_pk)
 
@@ -73,7 +73,7 @@ def process_audio_poly(wavdir, outdir, tol, ssm_read_pk, read_pk, n_jobs=4):
 
 
 def main():
-    """Main function sweep parameters."""
+    """Main function."""
     parser = argparse.ArgumentParser(description=
         "Runs the algorithm of pattern discovery on the polyphonic csv files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
