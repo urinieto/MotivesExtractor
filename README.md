@@ -3,6 +3,12 @@ MotivesExtractor
 
 Extract Polyphonic Musical Motives from Audio Recordings
 
+Examples
+--------
+
+To run the extractor on a single file without CSV annotations:
+    
+    ./extractor.py wav_file
 
 Requirements
 ------------

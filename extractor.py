@@ -12,11 +12,10 @@ Society for Music Information Retrieval Conference (ISMIR).
 Taipei, Taiwan, 2014.
 
 To run the script:
-./extractor.py wav_file [-o result_file]
+./extractor.py wav_file
 
 where:
-    wav_file: path to the 44.1kHz 16-bit mono wav file.
-    result_file: output file with the results ("results.txt" as default).
+    wav_file: path to the 11025Hz 16-bit mono wav file.
 
 For more ooptions:
 ./extractor.py -h
