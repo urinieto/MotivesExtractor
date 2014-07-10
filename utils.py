@@ -461,7 +461,7 @@ def compute_spectrogram(x, wlen, fs):
     nstep = N / 2        # Hop size of 0.5 * N
     nwin = N
 
-    logging.info("Computing Spectrogram: fs: %d, hop size: %d, FFT size: %d" %
+    logging.info("Spectrogram: sample rate: %d, hop size: %d, FFT size: %d" %
                  (fs, nstep, N))
 
     window = np.blackman(nwin)
@@ -473,8 +473,6 @@ def compute_spectrogram(x, wlen, fs):
         x_down[i] = np.mean(xseg)
         z = np.fft.fft(window * xseg, N)
         X[i, :] = np.abs(z[:N / 2])
-
-    #plot_matrix(X.T)
 
     return X, N
 

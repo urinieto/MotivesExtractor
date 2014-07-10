@@ -52,13 +52,6 @@ import utils
 import ismir
 
 
-CSV_ONTIME = 0
-CSV_MIDI = 1
-CSV_HEIGHT = 2
-CSV_DUR = 3
-CSV_STAFF = 4
-
-
 def get_bpm(wav_file):
     """Gets the correct bpm based on the wav_file name. If the wav_file is not
     contained in the JKU dataset, raises error.
@@ -129,12 +122,12 @@ def occurrence_to_csv(start, end, midi_score):
     end = int(end)
     h = 0.25  # Resolution of csv files
     for i in np.arange(start, end, h):
-        idxs = np.argwhere(midi_score[:, CSV_ONTIME] == i)
+        idxs = np.argwhere(midi_score[:, utils.CSV_ONTIME] == i)
         # Get all available staves
         if len(idxs) > 0:
             for idx in idxs:
-                onset = midi_score[idx, CSV_ONTIME][0]
-                midi = midi_score[idx, CSV_MIDI][0]
+                onset = midi_score[idx, utils.CSV_ONTIME][0]
+                midi = midi_score[idx, utils.CSV_MIDI][0]
                 occ.append([onset, midi, idx])
     return occ
 
