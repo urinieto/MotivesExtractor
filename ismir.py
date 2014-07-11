@@ -45,9 +45,14 @@ def plot_segments(X, segments):
         for j in xrange(i + 15):
             X[i, j] = 0
 
+    plt.figure(figsize=(6, 6))
     plt.imshow(X, interpolation="nearest", cmap=plt.cm.gray)
-    plt.xticks(np.empty(0), np.empty(0))
-    plt.yticks(np.empty(0), np.empty(0))
+    #plt.xticks(np.empty(0), np.empty(0))
+    #plt.yticks(np.empty(0), np.empty(0))
+    plt.xlabel("Time Frames")
+    plt.ylabel("Time Frames")
+    plt.tight_layout()
+    plt.savefig("paths-found.pdf")
     plt.show()
 
 
@@ -59,6 +64,7 @@ def plot_ssm(X):
     X : np.array((N,N))
         Self-similarity matrix
     """
+    plt.figure(figsize=(6, 6))
     Y = (X[3:, 3:] + X[2:-1, 2:-1] + X[1:-2, 1:-2] + X[:-3, :-3]) / 3.
     plt.imshow((1 - Y), interpolation="nearest", cmap=plt.cm.gray)
     h = 1705
@@ -85,6 +91,10 @@ def plot_ssm(X):
     plt.axhline(176 * h / m, color="k", linewidth=l)
     plt.axhline(181 * h / m, color="k", linewidth=l)
     plt.axhline(202 * h / m, color="k", linewidth=l)
+    #plt.tight_layout()
+    plt.xlabel("Time frames")
+    plt.ylabel("Time frames")
+    plt.savefig("SSM-euclidean-annotation.pdf")
     plt.show()
 
 

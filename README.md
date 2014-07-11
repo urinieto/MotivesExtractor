@@ -1,7 +1,12 @@
 MotivesExtractor
 ================
 
-Extract Polyphonic Musical Motives from Audio Recordings
+This script extracts the most repeated harmonic patterns from an audio file
+sampled at 11025Hz. It is based on the following paper:
+
+Nieto, O., Farbood, M., Identifying Polyphonic Harmonic Patterns From Audio 
+Recordings Using Music Segmentation Techniques. Proc. of the 15th International 
+wSociety for Music Information Retrieval Conference (ISMIR). Taipei, Taiwan, 2014. 
 
 Examples
 --------
@@ -56,10 +61,17 @@ For more options, please type
 Requirements
 ------------
 
+* [Python >=2.7](https://www.python.org/download/releases/2.7/)
 * [audiolab](https://pypi.python.org/pypi/scikits.audiolab/)
 * [numpy](http://www.numpy.org/)
 * [scipy](http://www.scipy.org/)
 * [joblib](https://pythonhosted.org/joblib/)
-* [pandas](http://pandas.pydata.org/)
 * [pylab](http://wiki.scipy.org/PyLab) (For plotting only)
-* [mir_eval](https://github.com/craffel/mir_eval) (For evaluation only)
+* [pandas](http://pandas.pydata.org/) (For evaluating only)
+* [mir_eval](https://github.com/craffel/mir_eval) (For evaluating only)
+
+Author
+------
+
+[Oriol Nieto](https://files.nyu.edu/onc202/public/)
+
