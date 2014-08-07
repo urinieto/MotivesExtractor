@@ -48,15 +48,15 @@ def process(refdir, estdir):
         est_pat = mir_eval.io.load_patterns(est)
 
         res = {}
-        res["Fest"], res["Pest"], res["Rest"] = \
+        res["Est_F"], res["Est_P"], res["Est_R"] = \
             mir_eval.pattern.establishment_FPR(ref_pat, est_pat)
-        res["Focc.75"], res["Pocc.75"], res["Rocc.75"] = \
+        res["Occ.75_F"], res["Occ.75_P"], res["Occ.75_R"] = \
             mir_eval.pattern.occurrence_FPR(ref_pat, est_pat, thres=.75)
-        res["F3"], res["P3"], res["R3"] = \
+        res["ThreeLayer_F"], res["ThreeLayer_P"], res["ThreeLayer_R"] = \
             mir_eval.pattern.three_layer_FPR(ref_pat, est_pat)
-        res["Focc.5"], res["Pocc.5"], res["Rocc.5"] = \
+        res["Occ.5_F"], res["Occ.5_P"], res["Occ.5_R"] = \
             mir_eval.pattern.occurrence_FPR(ref_pat, est_pat, thres=.5)
-        res["F"], res["P"], res["R"] = \
+        res["Std_F"], res["Std_P"], res["Std_R"] = \
             mir_eval.pattern.standard_FPR(ref_pat, est_pat)
         results = results.append(res, ignore_index=True)
 
