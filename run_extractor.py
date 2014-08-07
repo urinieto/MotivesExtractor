@@ -43,7 +43,7 @@ import extractor as EX
 import utils
 
 
-def process_piece(wav, outdir, tol, ssm_read_pk, read_pk):
+def process_piece(wav, outdir, tol, ssm_read_pk, read_pk, tonnetz):
     poly_str = "poly"
     f_base = os.path.basename(wav)
     base_name = f_base.split(".")[0]
@@ -63,14 +63,15 @@ def process_piece(wav, outdir, tol, ssm_read_pk, read_pk):
     out = os.path.join(outdir, out) + ".txt"
     #print "./extractor.py %s -c %s -o %s -th %f" % (wav, csv, out, tol)
     EX.process(wav, out, csv_file=csv, tol=tol, ssm_read_pk=ssm_read_pk,
-               read_pk=read_pk)
+               read_pk=read_pk, tonnetz=tonnetz)
 
 
-def process_audio_poly(wavdir, outdir, tol, ssm_read_pk, read_pk, n_jobs=4):
+def process_audio_poly(wavdir, outdir, tol, ssm_read_pk, read_pk, n_jobs=4,
+                       tonnetz=False):
     utils.ensure_dir(outdir)
     files = glob.glob(os.path.join(wavdir, "*.wav"))
     Parallel(n_jobs=n_jobs)(delayed(process_piece)(
-        wav, outdir, tol, ssm_read_pk, read_pk)
+        wav, outdir, tol, ssm_read_pk, read_pk, tonnetz)
         for wav in files)
 
 
@@ -93,7 +94,8 @@ def main():
     parser.add_argument("-j", action="store", default=4, type=int,
                         dest="n_jobs",
                         help="Number of processors to use to divide the task.")
-
+    parser.add_argument("-t", action="store_true", default=False,
+                        dest="tonnetz", help="Whether to use Tonnetz or not.")
     args = parser.parse_args()
     start_time = time.time()
 
@@ -103,8 +105,8 @@ def main():
 
     # Run the algorithm
     process_audio_poly(args.wavdir, args.outdir, tol=args.tol,
-                       ssm_read_pk=args.ssm_read_pk,
-                       read_pk=args.read_pk, n_jobs=args.n_jobs)
+                       ssm_read_pk=args.ssm_read_pk, read_pk=args.read_pk,
+                       n_jobs=args.n_jobs, tonnetz=args.tonnetz)
 
     logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
 

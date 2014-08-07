@@ -92,7 +92,7 @@ def compute_ssm(X, h, dist="euclidean"):
 def compute_key_inv_ssm(X, h, dist="euclidean"):
     """Computes the self similarity matrix that is key invariant from
         chromagram X."""
-    P = 12
+    P = X.shape[1]
     L = int(1. / h)
     if L % 2 == 0:
         L += 1

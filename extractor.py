@@ -49,6 +49,7 @@ import os
 import time
 import utils
 import ismir
+import pylab as plt
 
 
 def get_bpm(wav_file):
@@ -214,7 +215,7 @@ def obtain_patterns(segments, max_diff):
     return patterns
 
 
-def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False):
+def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False, tonnetz=False):
     """Computes the self similarity matrix from an audio file.
 
     Parameters
@@ -228,6 +229,8 @@ def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False):
         utomatically saves the ssm in a pickle file).
     is_ismir : bool
         Produce the plots that appear on the ISMIR paper.
+    tonnetz : bool
+        Compute tonnetz instead of Chroma features.
 
     Returns
     -------
@@ -242,9 +245,17 @@ def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False):
         if is_ismir:
             ismir.plot_chroma(C)
 
+        # Compute Tonnetz if needed
+        F = C
+        if tonnetz:
+            F = utils.chroma_to_tonnetz(C)
+
         # Compute the self similarity matrix
         logging.info("Computing key-invariant self-similarity matrix...")
-        X = utils.compute_key_inv_ssm(C, h)
+        X = utils.compute_key_inv_ssm(F, h)
+
+        #plt.imshow(X, interpolation="nearest", aspect="auto")
+        #plt.show()
 
         utils.write_cPickle(wav_file + "-audio-ssm.pk", X)
     else:
@@ -258,7 +269,8 @@ def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False):
 
 
 def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
-            ssm_read_pk=False, read_pk=False, rho=2, is_ismir=False):
+            ssm_read_pk=False, read_pk=False, rho=2, is_ismir=False,
+            tonnetz=False):
     """Main process to find the patterns in a polyphonic audio file.
 
     Parameters
@@ -282,6 +294,8 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
         Positive integer to compute the score of the segments.
     is_ismir : bool
         Produce the plots that appear on the ISMIR paper.
+    tonnetz : bool
+        Whether to use Tonnetz or Chromas.
     """
 
     # Get the correct bpm if needed
@@ -295,7 +309,7 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
                         # to process
 
     # Obtain the Self Similarity Matrix
-    X = compute_ssm(wav_file, h, ssm_read_pk, is_ismir)
+    X = compute_ssm(wav_file, h, ssm_read_pk, is_ismir, tonnetz)
 
     # Read CSV file
     if csv_file is not None:
@@ -374,6 +388,8 @@ def main():
     parser.add_argument("-ismir", action="store_true", default=False,
                         dest="is_ismir", help="Produce the plots that appear "
                         "on the ISMIR paper.")
+    parser.add_argument("-t", action="store_true", default=False,
+                        dest="tonnetz", help="Whether to use Tonnetz or not.")
     args = parser.parse_args()
     start_time = time.time()
 
@@ -384,7 +400,7 @@ def main():
     # Run the algorithm
     process(args.wav_file, args.output, csv_file=args.csv_file, bpm=args.bpm,
             tol=args.tol, read_pk=args.read_pk, ssm_read_pk=args.ssm_read_pk,
-            rho=args.rho, is_ismir=args.is_ismir)
+            rho=args.rho, is_ismir=args.is_ismir, tonnetz=args.tonnetz)
 
     logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
 
