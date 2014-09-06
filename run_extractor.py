@@ -42,21 +42,26 @@ from joblib import Parallel, delayed
 import extractor as EX
 import utils
 
+file_dict = {
+    "wtc2f20"       : "bachBWV889Fg",
+    "sonata01-3"    : "beethovenOp2No1Mvt3",
+    "mazurka24-4"   : "chopinOp24No4",
+    "silverswan"    : "gibbonsSilverSwan1612",
+    "sonata04-2"    : "mozartK282Mvt2"
+}
 
-def process_piece(wav, outdir, tol, ssm_read_pk, read_pk, tonnetz):
-    poly_str = "poly"
+
+def process_piece(wav, outdir, tol, ssm_read_pk, read_pk, tonnetz, mono):
+    if mono:
+        type_str = "mono"
+        type_str_long = "monophonic"
+    else:
+        type_str = "poly"
+        type_str_long = "polyphonic"
     f_base = os.path.basename(wav)
     base_name = f_base.split(".")[0]
-    if base_name == "wtc2f20-" + poly_str:
-        out = "bachBWV889Fg-polyphonic"
-    elif base_name == "sonata01-3-" + poly_str:
-        out = "beethovenOp2No1Mvt3-polyphonic"
-    elif base_name == "mazurka24-4-" + poly_str:
-        out = "chopinOp24No4-polyphonic"
-    elif base_name == "silverswan-" + poly_str:
-        out = "gibbonsSilverSwan1612-polyphonic"
-    elif base_name == "sonata04-2-" + poly_str:
-        out = "mozartK282Mvt2-polyphonic"
+    print base_name
+    out = file_dict[base_name.replace("-" + type_str, "")] + "-" + type_str_long
     csv = wav.replace(".wav", ".csv")
 
     logging.info("Running algorithm on %s" % f_base)
@@ -66,8 +71,8 @@ def process_piece(wav, outdir, tol, ssm_read_pk, read_pk, tonnetz):
                read_pk=read_pk, tonnetz=tonnetz)
 
 
-def process_audio_poly(wavdir, outdir, tol, ssm_read_pk, read_pk, n_jobs=4,
-                       tonnetz=False):
+def process_audio(wavdir, outdir, tol, ssm_read_pk, read_pk, n_jobs=4,
+                  tonnetz=False, mono=False):
     utils.ensure_dir(outdir)
     files = glob.glob(os.path.join(wavdir, "*.wav"))
     Parallel(n_jobs=n_jobs)(delayed(process_piece)(
@@ -96,6 +101,11 @@ def main():
                         help="Number of processors to use to divide the task.")
     parser.add_argument("-t", action="store_true", default=False,
                         dest="tonnetz", help="Whether to use Tonnetz or not.")
+    parser.add_argument("-m",
+                        dest="mono",
+                        action="store_true",
+                        help="Whether to evaluate the mono task",
+                        default=False)
     args = parser.parse_args()
     start_time = time.time()
 
@@ -104,9 +114,9 @@ def main():
                         level=logging.INFO)
 
     # Run the algorithm
-    process_audio_poly(args.wavdir, args.outdir, tol=args.tol,
-                       ssm_read_pk=args.ssm_read_pk, read_pk=args.read_pk,
-                       n_jobs=args.n_jobs, tonnetz=args.tonnetz)
+    process_audio(args.wavdir, args.outdir, tol=args.tol,
+                  ssm_read_pk=args.ssm_read_pk, read_pk=args.read_pk,
+                  n_jobs=args.n_jobs, tonnetz=args.tonnetz, mono=args.mono)
 
     logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
 
