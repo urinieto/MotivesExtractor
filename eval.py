@@ -38,12 +38,17 @@ import time
 import pandas as pd
 
 
-def process(refdir, estdir):
-    references = glob.glob(os.path.join(refdir, "*-polyphonic.txt"))
+def process(refdir, estdir, mono=False):
+    if mono:
+        type = "monophonic"
+    else:
+        type = "polyphonic"
+    references = glob.glob(os.path.join(refdir, "*-%s.txt" % type))
     estimations = glob.glob(os.path.join(estdir, "*.txt"))
     results = pd.DataFrame()
     for ref, est in zip(references, estimations):
-        assert os.path.basename(ref) == os.path.basename(est)
+        assert os.path.basename(ref).split("-")[0] == \
+            os.path.basename(est).split("-")[0]
         ref_pat = mir_eval.io.load_patterns(ref)
         est_pat = mir_eval.io.load_patterns(est)
 
@@ -71,11 +76,17 @@ def main():
     parser = argparse.ArgumentParser(description=
         "Evals the algorithm using mir_eval",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("refdir", action="store",
+    parser.add_argument("refdir",
+                        action="store",
                         help="Directory with the annotations")
-    parser.add_argument("estdir", action="store",
+    parser.add_argument("estdir",
+                        action="store",
                         help="Directory with the estimations")
-
+    parser.add_argument("-m",
+                        dest="mono",
+                        action="store_true",
+                        help="Whether to evaluate the mono task",
+                        default=False)
     args = parser.parse_args()
     start_time = time.time()
 
@@ -84,7 +95,7 @@ def main():
                         level=logging.INFO)
 
     # Run the algorithm
-    process(args.refdir, args.estdir)
+    process(args.refdir, args.estdir, mono=args.mono)
 
     logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
 
