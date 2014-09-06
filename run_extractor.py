@@ -60,13 +60,11 @@ def process_piece(wav, outdir, tol, ssm_read_pk, read_pk, tonnetz, mono):
         type_str_long = "polyphonic"
     f_base = os.path.basename(wav)
     base_name = f_base.split(".")[0]
-    print base_name
     out = file_dict[base_name.replace("-" + type_str, "")] + "-" + type_str_long
     csv = wav.replace(".wav", ".csv")
 
     logging.info("Running algorithm on %s" % f_base)
     out = os.path.join(outdir, out) + ".txt"
-    #print "./extractor.py %s -c %s -o %s -th %f" % (wav, csv, out, tol)
     EX.process(wav, out, csv_file=csv, tol=tol, ssm_read_pk=ssm_read_pk,
                read_pk=read_pk, tonnetz=tonnetz)
 
@@ -74,9 +72,13 @@ def process_piece(wav, outdir, tol, ssm_read_pk, read_pk, tonnetz, mono):
 def process_audio(wavdir, outdir, tol, ssm_read_pk, read_pk, n_jobs=4,
                   tonnetz=False, mono=False):
     utils.ensure_dir(outdir)
-    files = glob.glob(os.path.join(wavdir, "*.wav"))
+    if mono:
+        type_str = "mono"
+    else:
+        type_str = "poly"
+    files = glob.glob(os.path.join(wavdir, "*-%s.wav" % type_str))
     Parallel(n_jobs=n_jobs)(delayed(process_piece)(
-        wav, outdir, tol, ssm_read_pk, read_pk, tonnetz)
+        wav, outdir, tol, ssm_read_pk, read_pk, tonnetz, mono)
         for wav in files)
 
 
