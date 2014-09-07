@@ -59,7 +59,8 @@ bpm_dict = {
 }
 
 
-def process_piece(wav, outdir, tol, ssm_read_pk, read_pk, tonnetz, mono):
+def process_piece(wav, outdir, tol, ssm_read_pk, read_pk, tonnetz, mono,
+                  symbolic):
     if mono:
         type_str = "mono"
         type_str_long = "monophonic"
@@ -75,12 +76,16 @@ def process_piece(wav, outdir, tol, ssm_read_pk, read_pk, tonnetz, mono):
 
     logging.info("Running algorithm on %s" % f_base)
     out = os.path.join(outdir, out) + ".txt"
-    EX.process(wav, out, csv_file=csv, tol=tol, ssm_read_pk=ssm_read_pk,
-               read_pk=read_pk, tonnetz=tonnetz, bpm=bpm)
+    if symbolic:
+        EX.process(csv, out, tol=tol, ssm_read_pk=ssm_read_pk, read_pk=read_pk,
+                   tonnetz=tonnetz, bpm=bpm)
+    else:
+        EX.process(wav, out, csv_file=csv, tol=tol, ssm_read_pk=ssm_read_pk,
+                   read_pk=read_pk, tonnetz=tonnetz, bpm=bpm)
 
 
 def process_audio(wavdir, outdir, tol, ssm_read_pk, read_pk, n_jobs=4,
-                  tonnetz=False, mono=False):
+                  tonnetz=False, mono=False, symbolic=False):
     utils.ensure_dir(outdir)
     if mono:
         type_str = "mono"
@@ -88,7 +93,7 @@ def process_audio(wavdir, outdir, tol, ssm_read_pk, read_pk, n_jobs=4,
         type_str = "poly"
     files = glob.glob(os.path.join(wavdir, "*-%s.wav" % type_str))
     Parallel(n_jobs=n_jobs)(delayed(process_piece)(
-        wav, outdir, tol, ssm_read_pk, read_pk, tonnetz, mono)
+        wav, outdir, tol, ssm_read_pk, read_pk, tonnetz, mono, symbolic)
         for wav in files)
 
 
@@ -118,6 +123,11 @@ def main():
                         action="store_true",
                         help="Whether to evaluate the mono task",
                         default=False)
+    parser.add_argument("-s",
+                        dest="symbolic",
+                        action="store_true",
+                        help="Whether to use symbollic input or not",
+                        default=False)
     args = parser.parse_args()
     start_time = time.time()
 
@@ -128,7 +138,8 @@ def main():
     # Run the algorithm
     process_audio(args.wavdir, args.outdir, tol=args.tol,
                   ssm_read_pk=args.ssm_read_pk, read_pk=args.read_pk,
-                  n_jobs=args.n_jobs, tonnetz=args.tonnetz, mono=args.mono)
+                  n_jobs=args.n_jobs, tonnetz=args.tonnetz, mono=args.mono,
+                  symbolic=args.symbolic)
 
     logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
 

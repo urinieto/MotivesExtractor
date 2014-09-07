@@ -245,13 +245,17 @@ def mean_filter(X, L=9):
     return Y
 
 
-def diagonal_filter(X, L=2):
-    """Applies a diagonal filter to X. L must be even."""
-    #for i in xrange(L):
-        #X[i:,i:]
-    X1 = X[2:, 2:]
-    X2 = X[:-2, :-2]
-    X = (X[1:-1, 1:-1] + X1 + X2) / 3.
+def diagonal_filter(X, L=1):
+    """Applies a diagonal filter to X."""
+    size = X.shape[0] - L * 2
+    XX = []
+    for i in xrange(L):
+        XX.append(X[i:i + size, i:i + size])
+        XX.append(X[X.shape[0] - i - size:X.shape[0] - i,
+            X.shape[0] - i - size:X.shape[0] - i])
+
+    XX.append(X[L:-L, L:-L])
+    X[L:-L, L:-L] = np.mean(np.asarray(XX), axis=0)
     return X
 
 

@@ -52,14 +52,14 @@ import ismir
 import pylab as plt
 
 
-def get_bpm(wav_file):
-    """Gets the correct bpm based on the wav_file name. If the wav_file is not
+def get_bpm(in_file):
+    """Gets the correct bpm based on the in_file name. If the in_file is not
     contained in the JKU dataset, raises error.
 
     Parameters
     ----------
-    wav_file : str
-        Path to the wav file to obtain its bpm.
+    in_file : str
+        Path to the wav or csv file to obtain its bpm.
 
     Returns
     -------
@@ -73,13 +73,14 @@ def get_bpm(wav_file):
         "silverswan": 54,
         "sonata04-2": 120
     }
-    wav_file = os.path.basename(wav_file).replace(".wav", "")
-    wav_file = os.path.basename(wav_file).replace("-poly", "")
-    wav_file = os.path.basename(wav_file).replace("-mono", "")
-    if wav_file not in bpm_dict.keys():
+    in_file = os.path.basename(in_file).replace(in_file[-4:], "")
+    print in_file
+    in_file = os.path.basename(in_file).replace("-poly", "")
+    in_file = os.path.basename(in_file).replace("-mono", "")
+    if in_file not in bpm_dict.keys():
         raise Exception("%s not in the JKU dataset, you need to input a BPM" %
-                        wav_file)
-    return bpm_dict[wav_file]
+                        in_file)
+    return bpm_dict[in_file]
 
 
 def print_patterns(patterns, h):
@@ -271,15 +272,15 @@ def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False, tonnetz=False):
     return X
 
 
-def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
+def process(in_file, outfile, csv_file=None, bpm=None, tol=0.35,
             ssm_read_pk=False, read_pk=False, rho=2, is_ismir=False,
             tonnetz=False, mono=False):
     """Main process to find the patterns in a polyphonic audio file.
 
     Parameters
     ----------
-    wav_file : str
-        Path to the wav file to be analyzed.
+    in_file : str
+        Path to the wav or csv file to be analyzed.
     csv_file : str
         Path to the csv containing the midi_score of the input audio file
         (needed to produce a result that can be read for JKU dataset).
@@ -305,7 +306,13 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
 
     # Get the correct bpm if needed
     if bpm is None:
-        bpm = get_bpm(wav_file)
+        bpm = get_bpm(in_file)
+
+    # Set amount of diagonal filtering
+    if mono:
+        L = 5
+    else:
+        L = 2
 
     # Algorithm parameters
     min_notes = 8
@@ -313,15 +320,29 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
     h = bpm / 60. / 8.  # Hop size /8 works better than /4, but it takes longer
                         # to process
 
-    # Obtain the Self Similarity Matrix
-    X = compute_ssm(wav_file, h, ssm_read_pk, is_ismir, tonnetz)
-
     # Read CSV file
+    midi_score = None
     if csv_file is not None:
         logging.info("Reading the CSV file for MIDI pitches...")
         midi_score = utils.read_csv(csv_file)
 
-    X = utils.diagonal_filter(X)
+    # Obtain the Self Similarity Matrix
+    if in_file[-4:] == ".wav":
+        X = compute_ssm(in_file, h, ssm_read_pk, is_ismir, tonnetz)
+    elif in_file[-4:] == ".csv":
+        midi_score = utils.read_csv(in_file)
+        X, h = utils.csv_to_chromagram(midi_score)
+        logging.info("Computing key-invariant self-similarity matrix...")
+        X = utils.compute_ssm(X, h)
+        #X = utils.compute_key_inv_ssm(X, h)
+        L = 6
+    else:
+        raise RuntimeError("File type must be either '.wav' or '.csv', not "
+                           "'%s'." % in_file[-4:])
+
+    X = utils.diagonal_filter(X, L=L)
+    #plt.imshow(X, interpolation="nearest", aspect="auto")
+    #plt.show()
 
     patterns = []
     csv_patterns = []
@@ -337,9 +358,9 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
                 logging.info("\ttrying tolerance %.2f" % tol)
                 segments = utils.find_segments(X, min_dur, th=tol, rho=rho)
                 tol -= 0.05
-            utils.write_cPickle(wav_file + "-audio.pk", segments)
+            utils.write_cPickle(in_file + "-audio.pk", segments)
         else:
-            segments = utils.read_cPickle(wav_file + "-audio.pk")
+            segments = utils.read_cPickle(in_file + "-audio.pk")
 
         # Obtain the patterns from the segments and split them if needed
         logging.info("Obtaining the patterns from the segments...")
@@ -349,16 +370,16 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
         tol -= 0.05
 
         # Get the csv patterns if they exist
-        if csv_file is not None:
+        if midi_score is not None:
             csv_patterns = patterns_to_csv(patterns, midi_score, h)
         else:
             csv_patterns = [0]
 
     # Formatting csv patterns and save results
-    if csv_file is not None:
+    if midi_score is not None:
         logging.info("Writting results into %s" % outfile)
         utils.save_results(csv_patterns, outfile=outfile)
-        utils.create_midi(csv_patterns)
+        #utils.create_midi(csv_patterns)
     else:
         # If not csv, just print the results on the screen
         print_patterns(patterns, h)
@@ -377,7 +398,7 @@ def main():
         description="Discovers the audio polyphonic motives given a WAV file"
         " and a CSV file",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("wav_file", action="store", help="Input WAV file")
+    parser.add_argument("in_file", action="store", help="Input WAV or CSV file")
     parser.add_argument("-c", dest="csv_file", action="store", default=None,
                         help="Input CSV file (to read MIDI notes for output)")
     parser.add_argument("-b", dest="bpm", action="store", type=float,
@@ -411,7 +432,7 @@ def main():
         level=logging.INFO)
 
     # Run the algorithm
-    process(args.wav_file, args.output, csv_file=args.csv_file, bpm=args.bpm,
+    process(args.in_file, args.output, csv_file=args.csv_file, bpm=args.bpm,
             tol=args.tol, read_pk=args.read_pk, ssm_read_pk=args.ssm_read_pk,
             rho=args.rho, is_ismir=args.is_ismir, tonnetz=args.tonnetz,
             mono=args.mono)

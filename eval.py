@@ -45,8 +45,6 @@ def process(refdir, estdir, mono=False):
         type = "polyphonic"
     references = glob.glob(os.path.join(refdir, "*-%s.txt" % type))
     estimations = glob.glob(os.path.join(estdir, "*-%s.txt" % type))
-    print references
-    print estimations
     results = pd.DataFrame()
     for ref, est in zip(references, estimations):
         assert os.path.basename(ref).split("-")[0] == \
