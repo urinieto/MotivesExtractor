@@ -43,11 +43,19 @@ import extractor as EX
 import utils
 
 file_dict = {
-    "wtc2f20"       : "bachBWV889Fg",
-    "sonata01-3"    : "beethovenOp2No1Mvt3",
-    "mazurka24-4"   : "chopinOp24No4",
-    "silverswan"    : "gibbonsSilverSwan1612",
-    "sonata04-2"    : "mozartK282Mvt2"
+    "wtc2f20": "bachBWV889Fg",
+    "sonata01-3": "beethovenOp2No1Mvt3",
+    "mazurka24-4": "chopinOp24No4",
+    "silverswan": "gibbonsSilverSwan1612",
+    "sonata04-2": "mozartK282Mvt2"
+}
+
+bpm_dict = {
+    "wtc2f20": 84,
+    "sonata01-3": 118,
+    "mazurka24-4": 138,
+    "silverswan": 54,
+    "sonata04-2": 120
 }
 
 
@@ -61,12 +69,14 @@ def process_piece(wav, outdir, tol, ssm_read_pk, read_pk, tonnetz, mono):
     f_base = os.path.basename(wav)
     base_name = f_base.split(".")[0]
     out = file_dict[base_name.replace("-" + type_str, "")] + "-" + type_str_long
+    bpm = bpm_dict[base_name.replace("-" + type_str, "")]
+
     csv = wav.replace(".wav", ".csv")
 
     logging.info("Running algorithm on %s" % f_base)
     out = os.path.join(outdir, out) + ".txt"
     EX.process(wav, out, csv_file=csv, tol=tol, ssm_read_pk=ssm_read_pk,
-               read_pk=read_pk, tonnetz=tonnetz)
+               read_pk=read_pk, tonnetz=tonnetz, bpm=bpm)
 
 
 def process_audio(wavdir, outdir, tol, ssm_read_pk, read_pk, n_jobs=4,

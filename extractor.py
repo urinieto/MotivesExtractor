@@ -66,13 +66,16 @@ def get_bpm(wav_file):
     bpm : int
         BPM of the piece, as described in the JKU dataset.
     """
-    bpm_dict = {"wtc2f20-poly" : 84,
-                "sonata01-3-poly" : 118,
-                "mazurka24-4-poly" : 138,
-                "silverswan-poly" : 54,
-                "sonata04-2-poly" : 120
-                }
+    bpm_dict = {
+        "wtc2f20": 84,
+        "sonata01-3": 118,
+        "mazurka24-4": 138,
+        "silverswan": 54,
+        "sonata04-2": 120
+    }
     wav_file = os.path.basename(wav_file).replace(".wav", "")
+    wav_file = os.path.basename(wav_file).replace("-poly", "")
+    wav_file = os.path.basename(wav_file).replace("-mono", "")
     if wav_file not in bpm_dict.keys():
         raise Exception("%s not in the JKU dataset, you need to input a BPM" %
                         wav_file)
@@ -270,7 +273,7 @@ def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False, tonnetz=False):
 
 def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
             ssm_read_pk=False, read_pk=False, rho=2, is_ismir=False,
-            tonnetz=False):
+            tonnetz=False, mono=False):
     """Main process to find the patterns in a polyphonic audio file.
 
     Parameters
@@ -296,6 +299,8 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
         Produce the plots that appear on the ISMIR paper.
     tonnetz : bool
         Whether to use Tonnetz or Chromas.
+    mono : bool
+        Whether to use mono or polyphonic inputs.
     """
 
     # Get the correct bpm if needed
@@ -315,6 +320,8 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
     if csv_file is not None:
         logging.info("Reading the CSV file for MIDI pitches...")
         midi_score = utils.read_csv(csv_file)
+
+    X = utils.diagonal_filter(X)
 
     patterns = []
     csv_patterns = []
@@ -351,6 +358,7 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
     if csv_file is not None:
         logging.info("Writting results into %s" % outfile)
         utils.save_results(csv_patterns, outfile=outfile)
+        utils.create_midi(csv_patterns)
     else:
         # If not csv, just print the results on the screen
         print_patterns(patterns, h)
@@ -390,6 +398,11 @@ def main():
                         "on the ISMIR paper.")
     parser.add_argument("-t", action="store_true", default=False,
                         dest="tonnetz", help="Whether to use Tonnetz or not.")
+    parser.add_argument("-m",
+                        dest="mono",
+                        action="store_true",
+                        help="Whether to evaluate the mono task",
+                        default=False)
     args = parser.parse_args()
     start_time = time.time()
 
@@ -400,7 +413,8 @@ def main():
     # Run the algorithm
     process(args.wav_file, args.output, csv_file=args.csv_file, bpm=args.bpm,
             tol=args.tol, read_pk=args.read_pk, ssm_read_pk=args.ssm_read_pk,
-            rho=args.rho, is_ismir=args.is_ismir, tonnetz=args.tonnetz)
+            rho=args.rho, is_ismir=args.is_ismir, tonnetz=args.tonnetz,
+            mono=args.mono)
 
     logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
 

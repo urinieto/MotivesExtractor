@@ -45,10 +45,14 @@ def process(refdir, estdir, mono=False):
         type = "polyphonic"
     references = glob.glob(os.path.join(refdir, "*-%s.txt" % type))
     estimations = glob.glob(os.path.join(estdir, "*-%s.txt" % type))
+    print references
+    print estimations
     results = pd.DataFrame()
     for ref, est in zip(references, estimations):
         assert os.path.basename(ref).split("-")[0] == \
-            os.path.basename(est).split("-")[0]
+            os.path.basename(est).split("-")[0], "File names don't match: " \
+            "%s != %s" % (os.path.basename(ref).split("-")[0],
+                          os.path.basename(est).split("-")[0])
         ref_pat = mir_eval.io.load_patterns(ref)
         est_pat = mir_eval.io.load_patterns(est)
 

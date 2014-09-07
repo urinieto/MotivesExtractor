@@ -59,9 +59,8 @@ def read_cPickle(file):
     @param file string: Path to the cPickle file.
     @return x Object: cPickle contents.
     """
-    f = open(file, "r")
-    x = cPickle.load(f)
-    f.close()
+    with open(file, "r") as f:
+        x = cPickle.load(f)
     return x
 
 
@@ -244,6 +243,16 @@ def mean_filter(X, L=9):
     for i in np.arange(Lh, X.shape[0] - Lh):
         Y[i, :] = np.mean(X[i - Lh:i + Lh, :], axis=0)
     return Y
+
+
+def diagonal_filter(X, L=2):
+    """Applies a diagonal filter to X. L must be even."""
+    #for i in xrange(L):
+        #X[i:,i:]
+    X1 = X[2:, 2:]
+    X2 = X[:-2, :-2]
+    X = (X[1:-1, 1:-1] + X1 + X2) / 3.
+    return X
 
 
 def is_square(X, start_i, start_j, M, th):
@@ -522,3 +531,35 @@ def compute_audio_chromagram(wav_file, h):
     #plot_matrix(C.T)
 
     return C
+
+
+def create_midi(csv_patterns, out_midi_file="out_midi.mid"):
+    import pretty_midi
+    import librosa
+    # Create a PrettyMIDI object
+    out_midi = pretty_midi.PrettyMIDI()
+
+    # Create an Instrument instance for a piano instrument
+    piano_program = pretty_midi.instrument_name_to_program('Cello')
+    piano = pretty_midi.Instrument(program=piano_program)
+    # Iterate over note names, which will be converted to note number later
+    time = 0
+    for pattern in csv_patterns:
+        for occ in pattern:
+            start_occ = occ[0][0]
+            for j, row in enumerate(occ):
+                start = time + row[0] - start_occ
+                end = start + 0.5
+                note = pretty_midi.Note(velocity=100, pitch=int(row[1]),
+                        start=start, end=end)
+                # Add it to our cello instrument
+                piano.notes.append(note)
+            time = end + 1.5
+        time += 4
+    # Add the cello instrument to the PrettyMIDI object
+    out_midi.instruments.append(piano)
+    # Write out the MIDI data
+    out_midi.write(out_midi_file)
+    fs = 11025
+    audio = out_midi.synthesize(fs)
+    librosa.output.write_wav(out_midi_file + ".wav", audio, fs)
