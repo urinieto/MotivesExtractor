@@ -1,5 +1,4 @@
-MotivesExtractor
-================
+#MotivesExtractor#
 
 This script extracts the most repeated harmonic patterns from an audio file
 sampled at 11025Hz. It is based on the following paper:
@@ -8,58 +7,47 @@ Nieto, O., Farbood, M., Identifying Polyphonic Patterns From Audio Recordings
 Using Music Segmentation Techniques. Proc. of the 15th International 
 wSociety for Music Information Retrieval Conference (ISMIR). Taipei, Taiwan, 2014. 
 
-Examples
---------
+## Running the Algorithm ##
+###Symbolic Monophonic Version###
 
-To run the extractor on a single file without CSV annotations (the results
-will be printed on the screen):
+To run the extractor on a monophonic CSV file:
+
+    ./extractor.py csv_file -m [-o output.txt]
+
+###Symbolic Polyphonic Version###
+
+To run the extractor on a polyphonic CSV file:
+
+    ./extractor.py csv_file [-o output.txt]
+
+###Audio Monophonic Version###
+
+To run the extractor on a monophonic audio file with CSV annotations:
     
-    ./extractor.py wav_file
+    ./extractor.py wav_file -c csv_file -m [-o output.txt]
 
-where `wav_file` is the path to a wav file sampled at 11025Hz with 16 bits.
-You can find the wav files from the [JKU dataset](https://dl.dropbox.com/u/11997856/JKU/JKUPDD-Aug2013.zip)
-in the folder `jku_input`.
+where `csv_file` is the path to the corresponding CSV file using the JKU format.
+The wav file must be a one channel file sampled at 11025Hz.
 
-To run the extractor on a single file with CSV annotations:
+###Audio Polyphonic Version###
+
+To run the extractor on a polyphonic audio file with CSV annotations:
     
     ./extractor.py wav_file -c csv_file [-o output.txt]
 
-where `csv_file` is the path to the corresponsing CSV file using the JKU format.
-Examples of CSV files are included in the `jku_input` folder. The output is
-saved using the MIREX format. If the output file is not provided, 
-the results will be saved in `results.txt`.
+where `csv_file` is the path to the corresponding CSV file using the JKU format.
+The wav file must be a one channel file sampled at 11025Hz.
 
-To run the extractor on multiple files:
+###Additional Info###
 
-    ./run_extractor.py input_folder output_folder [-j 8]
+The output is always saved using the MIREX format.
+If the output file is not provided, the results will be saved in `results.txt`.
 
-It will analyze all the wav files and their corresponding CSV files from the
-`input_folder` and write the results into the `output_folder`. The parameter 
-`-j` indicates how many processors you want to run in parallel (default is 4).
-
-To evaluate an entire folder:
-
-    ./eval.py references_folder estimations_folder
-
-where these folders contain the patterns using the MIREX format, and both
-folders contains the exact same file names.
-
-To obtain the ISMIR numbers:
+For more information, please type:
     
-    ./run_extractor.py jku_input/ results/ -th .33 -r 2
-    ./eval.py parsed_jku/ results/
+    ./extractor.py -h
 
-To plot the ISMIR paper plots:
-
-    ./extractor.py jku_input/mazurka24-4-poly.wav -th .33 -r 2 -ismir
-
-For more options, please type
-
-    ./run_extractor.py -h
-
-
-Requirements
-------------
+##Requirements##
 
 * [Python >=2.7](https://www.python.org/download/releases/2.7/)
 * [audiolab](https://pypi.python.org/pypi/scikits.audiolab/)
@@ -70,8 +58,6 @@ Requirements
 * [pandas](http://pandas.pydata.org/) (For evaluating only)
 * [mir_eval](https://github.com/craffel/mir_eval) (For evaluating only)
 
-Author
-------
+##Author##
 
 [Oriol Nieto](https://files.nyu.edu/onc202/public/)
-
