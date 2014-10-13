@@ -121,7 +121,7 @@ def main():
     parser.add_argument("-m",
                         dest="mono",
                         action="store_true",
-                        help="Whether to evaluate the mono task",
+                        help="Whether to run the mono task",
                         default=False)
     parser.add_argument("-s",
                         dest="symbolic",

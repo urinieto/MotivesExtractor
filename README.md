@@ -1,7 +1,8 @@
 #MotivesExtractor#
 
 This script extracts the most repeated harmonic patterns from an audio file
-sampled at 11025Hz. It is based on the following paper:
+sampled at 11025Hz or from a CSV symbolic audio file.
+It is based on the following paper::
 
 Nieto, O., Farbood, M., Identifying Polyphonic Patterns From Audio Recordings 
 Using Music Segmentation Techniques. Proc. of the 15th International 
