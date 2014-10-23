@@ -241,6 +241,7 @@ def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False, tonnetz=False):
         # Read WAV file
         logging.info("Reading the WAV file...")
         C = utils.compute_audio_chromagram(wav_file, h)
+        C = utils.median_filter(C, L=9)
 
         if is_ismir:
             ismir.plot_chroma(C)
@@ -262,8 +263,9 @@ def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False, tonnetz=False):
         X = utils.read_cPickle(wav_file + "-audio-ssm.pk")
 
     if is_ismir:
-        ismir.plot_score_examples(X)
+        #X = X**2.5
         ismir.plot_ssm(X)
+        ismir.plot_score_examples(X)
 
     return X
 

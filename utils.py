@@ -416,7 +416,7 @@ def find_segments(X, min_dur, th=0.95, rho=2):
                 #print score, i, j, M
                 #plt.imshow(X[i:i+M, j:j+M], interpolation="nearest")
                 #plt.show()
-                X[i:i + M, j:j + M] = 0
+                #X[i:i + M, j:j + M] = 0
                 segments.append([i, i + M, j, j + M])
 
             # Counter stuff

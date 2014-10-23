@@ -44,6 +44,7 @@ def process(refdir, estdir):
     results = pd.DataFrame()
     for ref, est in zip(references, estimations):
         assert os.path.basename(ref) == os.path.basename(est)
+        logging.info("Evaluating file: %s", est)
         ref_pat = mir_eval.io.load_patterns(ref)
         est_pat = mir_eval.io.load_patterns(est)
 
