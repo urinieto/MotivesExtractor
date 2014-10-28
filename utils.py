@@ -416,7 +416,8 @@ def find_segments(X, min_dur, th=0.95, rho=2):
                 #print score, i, j, M
                 #plt.imshow(X[i:i+M, j:j+M], interpolation="nearest")
                 #plt.show()
-                #X[i:i + M, j:j + M] = 0
+                # TODO: Zero out matrix again?
+                X[i:i + M, j:j + M] = 0
                 segments.append([i, i + M, j, j + M])
 
             # Counter stuff
@@ -457,7 +458,7 @@ def read_wav(wav_file):
 
 def compute_spectrogram(x, wlen, fs):
     """Computes a spectrogram."""
-    N  = int(fs * wlen)
+    N = int(fs * wlen)
     nstep = N / 2        # Hop size of 0.5 * N
     nwin = N
 
@@ -522,3 +523,23 @@ def compute_audio_chromagram(wav_file, h):
     #plot_matrix(C.T)
 
     return C
+
+
+def sonify_patterns(wav_file, patterns, h, out_dir="sonify"):
+    """Sonifies the patterns."""
+    # Read the wav file
+    x, fs = read_wav(wav_file)
+
+    # Make sure that directory exists
+    ensure_dir(out_dir)
+
+    for i, p in enumerate(patterns):
+        for j, occ in enumerate(p):
+            hop = int(h * fs) / 2.
+            start = int(occ[2] * hop)
+            end = int(occ[3] * hop)
+            audio_pattern = x[start: end]
+            file_name = os.path.join(out_dir,
+                                     "pattern%d_occ%d_%.1f-%.1f.wav" %
+                                     (i, j, start / float(fs), end / float(fs)))
+            audiolab.wavwrite(audio_pattern, file_name, fs)

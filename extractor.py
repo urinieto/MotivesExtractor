@@ -272,7 +272,7 @@ def compute_ssm(wav_file, h, ssm_read_pk, is_ismir=False, tonnetz=False):
 
 def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
             ssm_read_pk=False, read_pk=False, rho=2, is_ismir=False,
-            tonnetz=False):
+            tonnetz=False, sonify=False):
     """Main process to find the patterns in a polyphonic audio file.
 
     Parameters
@@ -298,6 +298,8 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
         Produce the plots that appear on the ISMIR paper.
     tonnetz : bool
         Whether to use Tonnetz or Chromas.
+    sonify : bool
+        Whether to sonify the patterns or not.
     """
 
     # Get the correct bpm if needed
@@ -349,6 +351,11 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
         else:
             csv_patterns = [0]
 
+    # Sonify patterns if needed
+    if sonify:
+        logging.info("Sonifying Patterns...")
+        utils.sonify_patterns(wav_file, patterns, h)
+
     # Formatting csv patterns and save results
     if csv_file is not None:
         logging.info("Writting results into %s" % outfile)
@@ -362,6 +369,7 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
 
     # Alright, we're done :D
     logging.info("Algorithm finished.")
+    print X.shape
 
 
 def main():
@@ -392,6 +400,8 @@ def main():
                         "on the ISMIR paper.")
     parser.add_argument("-t", action="store_true", default=False,
                         dest="tonnetz", help="Whether to use Tonnetz or not.")
+    parser.add_argument("-s", action="store_true", default=False,
+                        dest="sonify", help="Sonify the patterns")
     args = parser.parse_args()
     start_time = time.time()
 
@@ -402,7 +412,8 @@ def main():
     # Run the algorithm
     process(args.wav_file, args.output, csv_file=args.csv_file, bpm=args.bpm,
             tol=args.tol, read_pk=args.read_pk, ssm_read_pk=args.ssm_read_pk,
-            rho=args.rho, is_ismir=args.is_ismir, tonnetz=args.tonnetz)
+            rho=args.rho, is_ismir=args.is_ismir, tonnetz=args.tonnetz,
+            sonify=args.sonify)
 
     logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
 
