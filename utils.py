@@ -105,6 +105,10 @@ def compute_key_inv_ssm(X, h, dist="euclidean"):
     for i in xrange(P):
         SS[i] = spatial.distance.cdist(X, np.roll(X, i), dist)
 
+    #import ismir
+    #K = SS[0] / SS[0].max()
+    #ismir.plot_ssm(1 - K)
+
     # Get key-ivariant ssm:
     S = np.min(SS, axis=0)
 

@@ -354,6 +354,7 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
     # Sonify patterns if needed
     if sonify:
         logging.info("Sonifying Patterns...")
+
         utils.sonify_patterns(wav_file, patterns, h)
 
     # Formatting csv patterns and save results
