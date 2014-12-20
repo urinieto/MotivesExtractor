@@ -49,7 +49,6 @@ import os
 import time
 import utils
 import ismir
-import pylab as plt
 
 
 def get_bpm(wav_file):
@@ -370,7 +369,6 @@ def process(wav_file, outfile, csv_file=None, bpm=None, tol=0.35,
 
     # Alright, we're done :D
     logging.info("Algorithm finished.")
-    print X.shape
 
 
 def main():
@@ -417,6 +415,7 @@ def main():
             sonify=args.sonify)
 
     logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
+
 
 if __name__ == "__main__":
     main()

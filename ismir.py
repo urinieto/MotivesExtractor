@@ -53,7 +53,7 @@ def plot_segments(X, segments):
             X[i, :] = 0
 
     plt.figure(figsize=(6, 6))
-    plt.imshow(X, interpolation="nearest", cmap=plt.cm.gray)
+    plt.imshow(X, interpolation="nearest", cmap=plt.cm.gray_r)
     plt.xlabel("Time Frames")
     plt.ylabel("Time Frames")
     plt.tight_layout()
@@ -142,7 +142,7 @@ def plot_score_examples(X):
     X : np.array((N,N))
         Self-similarity matrix
     """
-    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3)
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(8, 4))
     plt.subplots_adjust(wspace=.05)
     props = dict(boxstyle='round', facecolor='white', alpha=0.95)
     cm = plt.cm.gray
@@ -157,6 +157,7 @@ def plot_score_examples(X):
         verticalalignment='top', bbox=props)
     ax1.set_xticks(np.empty(0), np.empty(0))
     ax1.set_yticks(np.empty(0), np.empty(0))
+    ax1.set_title("(a)")
 
     # Real matrix with an actual path
     X2 = X[359:359 + 31, 1285:1285 + 31]
@@ -167,6 +168,7 @@ def plot_score_examples(X):
         verticalalignment='top', bbox=props)
     ax2.set_xticks(np.empty(0), np.empty(0))
     ax2.set_yticks(np.empty(0), np.empty(0))
+    ax2.set_title("(b)")
 
     utils.compute_segment_score(X, 500, 1100, 31, 0.35)
     utils.compute_segment_score_omega(X, 500, 1100, 31, 0.35, 3)
@@ -177,5 +179,7 @@ def plot_score_examples(X):
         verticalalignment='top', bbox=props)
     ax3.set_xticks(np.empty(0), np.empty(0))
     ax3.set_yticks(np.empty(0), np.empty(0))
+    ax3.set_title("(c)")
 
+    plt.tight_layout()
     plt.show()
