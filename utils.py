@@ -26,7 +26,7 @@ import pylab as plt
 from scipy import spatial
 import logging
 
-from scikits import audiolab
+import librosa
 
 CSV_ONTIME = 0
 CSV_MIDI = 1
@@ -451,11 +451,11 @@ def read_wav(wav_file):
     assert os.path.isfile(wav_file), \
         'ERROR: wivefile file %s does not exist' % wav_file
 
-    x, fs, enc = audiolab.wavread(wav_file)
-    if len(x.shape) >= 2:
-        x = x[:, 0]  # Make mono
+    x, fs = librosa.core.load(wav_file, sr=11025)
+    # if len(x.shape) >= 2:
+    #     x = x[:, 0]  # Make mono
 
-    assert fs == 11025, "ERROR: File %s is not sampled at 44100 Hz" % wav_file
+    assert fs == 11025, "ERROR: File %s is not sampled at 11025 Hz" % wav_file
 
     return x, fs
 
@@ -546,4 +546,4 @@ def sonify_patterns(wav_file, patterns, h, out_dir="sonify"):
             file_name = os.path.join(out_dir,
                                      "pattern%d_occ%d_%.1f-%.1f.wav" %
                                      (i, j, start / float(fs), end / float(fs)))
-            audiolab.wavwrite(audio_pattern, file_name, fs)
+            librosa.output.write_wav(file_name, audio_pattern, fs)
