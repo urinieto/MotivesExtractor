@@ -6,7 +6,7 @@ sampled at 11025Hz. It is based on the following paper:
 
 Nieto, O., Farbood, M., Identifying Polyphonic Patterns From Audio Recordings 
 Using Music Segmentation Techniques. Proc. of the 15th International 
-wSociety for Music Information Retrieval Conference (ISMIR). Taipei, Taiwan, 2014. 
+Society for Music Information Retrieval Conference (ISMIR). Taipei, Taiwan, 2014. 
 
 Examples
 --------
